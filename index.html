@@ -209,7 +209,7 @@ self.addEventListener('notificationclick', e => {
     // };
     //
     // Після розгортання — вставте адресу сюди:
-    const ICAL_PROXY_URL = 'https://kychera-ical.wadim-r-k-36.workers.dev';
+    const ICAL_PROXY_URL = 'kychera-ical.wadim-r-k-36.workers.dev';
 
     // --- Кастомні іконки SVG для повної незалежності від зовнішніх шрифтів ---
     const HomeIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>;
@@ -795,30 +795,14 @@ self.addEventListener('notificationclick', e => {
       };
 
       const handleCopyIcsExportLink = (roomName) => {
-        // Генеруємо реальний iCal URL через Cloudflare Worker для експорту в Booking/Airbnb
-        const roomSlug = roomName.replace(/\s+/g, '_').replace(/[()]/g, '').toLowerCase();
-        const exportLink = `https://kychera-ical.wadim-r-k-36.workers.dev/export/${roomSlug}.ics`;
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(exportLink).then(() => {
-            showNotificationToast(`✅ iCal-посилання скопійовано для ${roomName}!`);
-          }).catch(() => {
-            const tempInput = document.createElement('input');
-            tempInput.value = exportLink;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempInput);
-            showNotificationToast(`✅ iCal-посилання скопійовано для ${roomName}!`);
-          });
-        } else {
-          const tempInput = document.createElement('input');
-          tempInput.value = exportLink;
-          document.body.appendChild(tempInput);
-          tempInput.select();
-          document.execCommand('copy');
-          document.body.removeChild(tempInput);
-          showNotificationToast(`✅ iCal-посилання скопійовано для ${roomName}!`);
-        }
+        const fakeLink = `https://kychera.pms.booking/ical/export/${roomName.replace(/\s+/g, '_')}.ics`;
+        const tempInput = document.createElement('input');
+        tempInput.value = fakeLink;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempInput);
+        showNotificationToast(`Посилання скопійовано для ${roomName}!`);
       };
 
       const changeMonth = (offset) => {
@@ -1245,9 +1229,7 @@ self.addEventListener('notificationclick', e => {
         const encodedText = encodeURIComponent(previewMessageText);
         return {
           whatsapp: `https://wa.me/${phone}?text=${encodedText}`,
-          telegram: `https://t.me/+${phone}`,
-          viber: `viber://chat?number=%2B${phone}&draft=${encodedText}`,
-          sms: `sms:+${phone}${/iPhone|iPad|iPod/i.test(navigator.userAgent) ? '&' : '?'}body=${encodedText}`
+          telegram: `https://t.me/+${phone}`
         };
       }, [selectedDirectGuestId, previewMessageText, directGuests]);
 
@@ -1643,8 +1625,6 @@ self.addEventListener('notificationclick', e => {
                       <div className="grid grid-cols-2 gap-2">
                         <a href={selectedDirectGuestId ? messengerUrls.whatsapp : '#'} target="_blank" rel="noopener noreferrer" className="bg-[#10b981] text-white py-3 rounded-xl text-center text-xs font-bold">WhatsApp</a>
                         <a href={selectedDirectGuestId ? messengerUrls.telegram : '#'} target="_blank" rel="noopener noreferrer" className="bg-[#2563eb] text-white py-3 rounded-xl text-center text-xs font-bold">Telegram</a>
-                        <a href={selectedDirectGuestId ? messengerUrls.viber : '#'} target="_blank" rel="noopener noreferrer" className="bg-[#7360f2] text-white py-3 rounded-xl text-center text-xs font-bold">Viber</a>
-                        <a href={selectedDirectGuestId ? messengerUrls.sms : '#'} className="bg-slate-700 text-white py-3 rounded-xl text-center text-xs font-bold">SMS</a>
                       </div>
                     </div>
                   </div>
@@ -1731,20 +1711,15 @@ self.addEventListener('notificationclick', e => {
                 {/* ICS Експорт */}
                 <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-4">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Експорт календаря</span>
-                  <p className="text-[10px] text-slate-500 leading-relaxed">Скопіюйте iCal-посилання і вставте його у Booking.com або Airbnb для синхронізації зайнятості.</p>
                   <div className="space-y-3">
                     {rooms.map(r => (
-                      <div key={r} className="p-4 bg-slate-50 border rounded-xl space-y-2.5">
-                        <span className="text-xs font-bold block">{r}</span>
-                        <div className="flex flex-col gap-2">
-                          <button onClick={() => handleCopyIcsExportLink(r)} className="w-full bg-indigo-600 text-white px-3 py-2 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1.5"><CopyIcon /> Копіювати iCal для Booking / Airbnb</button>
-                          <button onClick={() => handleExportIcsFile(r)} className="w-full bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-[10px] font-bold">Скачати .ICS файл</button>
+                      <div key={r} className="p-4 bg-slate-50 border rounded-xl flex justify-between items-center">
+                        <span className="text-xs font-bold">{r}</span>
+                        <div className="flex space-x-2">
+                          <button onClick={() => handleExportIcsFile(r)} className="bg-slate-200 text-slate-800 px-3 py-1.5 rounded-lg text-[10px] font-bold">Скачати .ICS</button>
                         </div>
                       </div>
                     ))}
-                  </div>
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-                    <p className="text-[10px] text-amber-800 leading-relaxed"><strong>Як використати:</strong><br/>1. Натисніть «Копіювати iCal» для потрібної кімнати<br/>2. У Booking.com: Об'єкти → Доступність → iCal → Вставте посилання<br/>3. В Airbnb: Управління оголошенням → Доступність → Синхронізація календаря → Вставте посилання</p>
                   </div>
                 </div>
 
