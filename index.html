@@ -51,66 +51,12 @@
   </style>
 
   <script>
-    // ===== SERVICE WORKER реєстрація =====
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        // Вбудований Service Worker через Blob URL
-        const swCode = `
-const CACHE = 'kychera-v2';
-const OFFLINE_URLS = ['/'];
-
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)).catch(()=>{}));
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys =>
-    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-  ));
-  self.clients.claim();
-});
-
-self.addEventListener('fetch', e => {
-  // Тільки GET-запити і не Firebase/CDN
-  if (e.request.method !== 'GET') return;
-  const url = e.request.url;
-  if (url.includes('firestore') || url.includes('googleapis') || url.includes('unpkg') || url.includes('cdn.tailwind')) return;
-
-  e.respondWith(
-    fetch(e.request).then(res => {
-      if (res && res.status === 200 && res.type === 'basic') {
-        const clone = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
-      }
-      return res;
-    }).catch(() => caches.match(e.request))
-  );
-});
-
-// Push сповіщення
-self.addEventListener('push', e => {
-  const data = e.data ? e.data.json() : { title: 'Кичера PMS', body: 'Нова подія' };
-  e.waitUntil(self.registration.showNotification(data.title, {
-    body: data.body,
-    icon: 'https://placehold.co/192x192/4f46e5/ffffff?text=КЕ',
-    badge: 'https://placehold.co/72x72/4f46e5/ffffff?text=К',
-    vibrate: [200, 100, 200],
-    data: { url: self.location.origin }
-  }));
-});
-
-self.addEventListener('notificationclick', e => {
-  e.notification.close();
-  e.waitUntil(clients.openWindow(e.notification.data.url || '/'));
-});
-        `;
-        const blob = new Blob([swCode], { type: 'application/javascript' });
-        const swUrl = URL.createObjectURL(blob);
-        navigator.serviceWorker.register(swUrl).catch(console.warn);
-      });
-    }
-  </script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
+</script>
 </head>
 <body class="bg-[#fafbfc] text-slate-800">
 
