@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Кичера PMS">
-  <!-- Apple Touch Icon (можна замінити на свій логотип) -->
+  <!-- Apple Touch Icon -->
   <link rel="apple-touch-icon" href="https://placehold.co/192x192/4f46e5/ffffff?text=КЕ&font=montserrat">
   
   <!-- Tailwind CSS -->
@@ -20,7 +20,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;800&display=swap" rel="stylesheet">
   
   <style>
     body {
@@ -88,7 +88,7 @@
       onSnapshot 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // --- ВАШІ ОСОБИСТІ НАЛАШТУВАННЯ FIREBASE ---
+    // --- НАЛАШТУВАННЯ FIREBASE ---
     const firebaseConfig = {
       apiKey: "AIzaSyBKDRl-dDw9es9ICl-2ULHaZymiJHgGYHQ",
       authDomain: "kychera-pms.firebaseapp.com",
@@ -103,7 +103,6 @@
     let useFallback = false;
 
     try {
-      // Ініціалізація Firebase
       app = initializeApp(firebaseConfig);
       auth = getAuth(app);
       db = getFirestore(app);
@@ -114,7 +113,6 @@
 
     const appId = "kychera-mobile-premium-v3";
 
-    // Експортуємо Firebase у глобальну область видимості для доступу з нашого React компоненту
     window.firebaseServices = { 
       auth, 
       db, 
@@ -132,32 +130,11 @@
     };
   </script>
 
-  <!-- Наш основний React-додаток -->
+  <!-- React-додаток -->
   <script type="text/babel">
-    const { useState, useEffect, useMemo, useRef, useCallback } = React;
+    const { useState, useEffect, useMemo, useRef } = React;
 
-    // ===== ICAL PROXY (Cloudflare Worker — безкоштовно) =====
-    // Щоб отримати реальні дані з Booking/Airbnb, розгорніть цей воркер на:
-    // https://workers.cloudflare.com (безкоштовний план)
-    // Код воркера: https://gist.github.com/kychera/ical-proxy (або скопіюйте нижче)
-    //
-    // export default {
-    //   async fetch(request) {
-    //     const url = new URL(request.url);
-    //     const target = url.searchParams.get('url');
-    //     if (!target) return new Response('Missing url', { status: 400 });
-    //     const res = await fetch(target);
-    //     const text = await res.text();
-    //     return new Response(text, {
-    //       headers: { 'Content-Type': 'text/calendar', 'Access-Control-Allow-Origin': '*' }
-    //     });
-    //   }
-    // };
-    //
-    // Після розгортання — вставте адресу сюди:
-    const ICAL_PROXY_URL = 'https://kychera-ical.wadim-r-k-36.workers.dev';
-
-    // --- Кастомні іконки SVG для повної незалежності від зовнішніх шрифтів ---
+    // --- Кастомні іконки SVG ---
     const HomeIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>;
     const CalendarIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>;
     const ClockIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0y" /></svg>;
@@ -174,9 +151,9 @@
     const CheckIcon = () => <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>;
     const CopyIcon = () => <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>;
     const PlusCircleIcon = () => <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
-    const RefreshIcon = () => <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 4.79M12 8v4l3 3" /></svg>;
     const ArrowDownCircleIcon = () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 13l-3 3m0 0l-3-3m3 3V8m0 13a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
     const ArrowUpCircleIcon = () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 11l3-3m0 0l3 3m-3-3v8m0 13a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+    const WalletIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>;
 
     function App() {
       const [user, setUser] = useState(null);
@@ -187,11 +164,10 @@
       // Стан даних
       const [bookings, setBookings] = useState([]);
       const [rooms, setRooms] = useState(['Котедж #1 (Головний)', 'Котедж #2 (Двоповерховий)', 'Апартаменти VIP']);
-      const [icalChannels, setIcalChannels] = useState([]);
+      const [expenses, setExpenses] = useState([]);
       
       const [isLoading, setIsLoading] = useState(true);
       const [syncStatus, setSyncStatus] = useState('connecting');
-      const [isSyncingIcal, setIsSyncingIcal] = useState(false);
       const [isSaving, setIsSaving] = useState(false);
 
       // Локальний режим як резервний варіант
@@ -254,18 +230,28 @@
       ]);
 
       const [isEditingTemplates, setIsEditingTemplates] = useState(false);
-      const [editingTemplateId, setEditingTemplateId] = useState(null); 
       const [newTemplateLabel, setNewTemplateLabel] = useState('');
       const [newTemplateText, setNewTemplateText] = useState('');
 
-      // iCal
-      const [icalUrlInput, setIcalUrlInput] = useState('');
-      const [icalRoomSelect, setIcalRoomSelect] = useState('Котедж #1 (Головний)');
-      const [icalSourceSelect, setIcalSourceSelect] = useState('Airbnb'); 
-
       const [newRoomName, setNewRoomName] = useState('');
       const [searchTerm, setSearchTerm] = useState('');
+      const [chatSearchTerm, setChatSearchTerm] = useState(''); // Новий стан для пошуку у чатах за іменем/датою заїзду
       const [activeBanner, setActiveBanner] = useState(null);
+
+      // Стан підвкладок у вкладці "Ще"
+      const [moreSubTab, setMoreSubTab] = useState('rooms'); // 'rooms', 'finance', 'expenses'
+
+      // Форма витрат
+      const [expenseDesc, setExpenseDesc] = useState('');
+      const [expenseAmount, setExpenseAmount] = useState('');
+      const [expenseDate, setExpenseDate] = useState(() => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      });
+
+      // Стан фільтрації для фінансового звіту
+      const [reportMonth, setReportMonth] = useState(() => String(new Date().getMonth() + 1).padStart(2, '0'));
+      const [reportYear, setReportYear] = useState(() => String(new Date().getFullYear()));
 
       // --- Функція сповіщень (toast) ---
       const showNotificationToast = (message) => {
@@ -291,7 +277,6 @@
 
             const { auth, signInAnonymously, onAuthStateChanged } = window.firebaseServices;
             
-            // Авторизація з обробкою помилок активації Firestore
             signInAnonymously(auth).then(() => {
               setSyncStatus('synced');
             }).catch(err => {
@@ -304,7 +289,6 @@
               if (currentUser) myUserIdRef.current = currentUser.uid;
             });
 
-            // Перевірка імені користувача
             const savedName = localStorage.getItem('kychera_user_name_global');
             if (savedName) {
               setUserName(savedName);
@@ -335,10 +319,9 @@
         if (localRooms) setRooms(JSON.parse(localRooms));
         else localStorage.setItem('kychera_fallback_rooms', JSON.stringify(rooms));
 
-        const localIcal = localStorage.getItem('kychera_fallback_ical');
-        if (localIcal) setIcalChannels(JSON.parse(localIcal));
+        const localExpenses = localStorage.getItem('kychera_fallback_expenses');
+        if (localExpenses) setExpenses(JSON.parse(localExpenses));
 
-        // Перевірка імені користувача
         const savedName = localStorage.getItem('kychera_user_name_global');
         if (savedName) {
           setUserName(savedName);
@@ -357,7 +340,7 @@
 
         const bookingsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'bookings');
         const roomsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'rooms');
-        const icalCollection = collection(db, 'artifacts', appId, 'public', 'data', 'ical_channels');
+        const expensesCollection = collection(db, 'artifacts', appId, 'public', 'data', 'expenses');
 
         // Кімнати
         const unsubscribeRooms = onSnapshot(roomsCollection, (snapshot) => {
@@ -390,15 +373,11 @@
             ...doc.data()
           }));
 
-          // Перевіряємо чи це зміна від ІНШОГО оператора
           if (!isFirstLoadRef.current && prevBookingsRef.current !== null) {
             snapshot.docChanges().forEach(change => {
               const data = { id: change.doc.id, ...change.doc.data() };
-              // Пропускаємо власні зміни та iCal-бронювання
               if (data.updatedBy === userName && change.type !== 'added') return;
-              if (data.status === 'ICAL') return;
               const who = data.updatedBy || data.createdBy || 'Інший оператор';
-              // Показуємо сповіщення тільки якщо змінив хтось інший
               if (who && who !== userName) {
                 let msg = '';
                 if (change.type === 'added') msg = `➕ ${who} додав: ${data.guestName || 'нове бронювання'}`;
@@ -419,21 +398,21 @@
           enableLocalStorageFallback();
         });
 
-        // iCal Канали
-        const unsubscribeIcal = onSnapshot(icalCollection, (snapshot) => {
-          const loadedIcal = snapshot.docs.map(doc => ({
+        // Витрати
+        const unsubscribeExpenses = onSnapshot(expensesCollection, (snapshot) => {
+          const loadedExpenses = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
           }));
-          setIcalChannels(loadedIcal);
+          setExpenses(loadedExpenses);
         }, (error) => {
-          console.warn("Помилка отримання каналів iCal з Firestore:", error);
+          console.warn("Помилка доступу до витрат у Firestore:", error);
         });
 
         return () => {
           unsubscribeRooms();
           unsubscribeBookings();
-          unsubscribeIcal();
+          unsubscribeExpenses();
         };
       }, [user, isOfflineMode]);
 
@@ -515,256 +494,72 @@
         });
       };
 
-      const handleIcalImport = async (e) => {
+      // --- Робота з витратами ---
+      const handleAddExpense = async (e) => {
         e.preventDefault();
-        const url = icalUrlInput.trim();
-        if (!url) return;
+        const desc = expenseDesc.trim();
+        const amount = parseFloat(expenseAmount);
+        if (!desc || isNaN(amount) || amount <= 0) return;
+
+        const payload = {
+          description: desc,
+          amount: amount,
+          date: expenseDate || todayStr,
+          createdAt: Date.now(),
+          createdBy: userName || 'Адміністратор'
+        };
 
         if (isOfflineMode) {
-          const newChan = {
-            id: 'local_' + Date.now(),
-            roomName: icalRoomSelect,
-            source: icalSourceSelect,
-            url: url,
-            createdAt: Date.now()
-          };
-          const updatedChannels = [...icalChannels, newChan];
-          setIcalChannels(updatedChannels);
-          localStorage.setItem('kychera_fallback_ical', JSON.stringify(updatedChannels));
-          setIcalUrlInput('');
-          showNotificationToast('Канал підключено локально! Запустіть синхронізацію.');
-          handleTriggerSync();
+          payload.id = 'expense_' + Date.now();
+          const updated = [...expenses, payload];
+          setExpenses(updated);
+          localStorage.setItem('kychera_fallback_expenses', JSON.stringify(updated));
+          setExpenseDesc('');
+          setExpenseAmount('');
+          showNotificationToast('Витрату внесено локально!');
           return;
         }
 
         if (!window.firebaseServices) return;
         const { db, appId, collection, addDoc } = window.firebaseServices;
-
         try {
-          const icalCollection = collection(db, 'artifacts', appId, 'public', 'data', 'ical_channels');
-          await addDoc(icalCollection, {
-            roomName: icalRoomSelect,
-            source: icalSourceSelect,
-            url: url,
-            createdAt: Date.now()
-          });
-
-          await logActivity(`Підключено iCal канал (${icalSourceSelect}) для ${icalRoomSelect}`);
-          setIcalUrlInput('');
-          showNotificationToast('Канал підключено! Запустіть загальну синхронізацію.');
-          handleTriggerSync();
+          const expensesCollection = collection(db, 'artifacts', appId, 'public', 'data', 'expenses');
+          await addDoc(expensesCollection, payload);
+          await logActivity(`Внесено витрату: ${desc} на суму ${amount} ₴`);
+          setExpenseDesc('');
+          setExpenseAmount('');
+          showNotificationToast('Витрату зафіксовано!');
         } catch (err) {
-          console.error(err);
+          console.error("Помилка додавання витрати: ", err);
         }
       };
 
-      const handleDeleteIcalChannel = (id, room, source) => {
+      const handleDeleteExpense = (id, desc) => {
         setConfirmDialog({
           isOpen: true,
-          title: 'Видалити канал?',
-          message: `Вимкнути автоматичну синхронізацію ${source} для ${room}?`,
+          title: 'Видалити витрату?',
+          message: `Ви дійсно хочете видалити витрату "${desc}"?`,
           onConfirm: async () => {
             if (isOfflineMode) {
-              const updatedChannels = icalChannels.filter(c => c.id !== id);
-              setIcalChannels(updatedChannels);
-              localStorage.setItem('kychera_fallback_ical', JSON.stringify(updatedChannels));
-              showNotificationToast('Канал успішно вилучено.');
+              const updated = expenses.filter(ex => ex.id !== id);
+              setExpenses(updated);
+              localStorage.setItem('kychera_fallback_expenses', JSON.stringify(updated));
+              showNotificationToast('Витрату видалено локально!');
               return;
             }
 
             if (!window.firebaseServices) return;
             const { db, appId, doc, deleteDoc } = window.firebaseServices;
             try {
-              const icalDoc = doc(db, 'artifacts', appId, 'public', 'data', 'ical_channels', id);
-              await deleteDoc(icalDoc);
-              await logActivity(`Видалено iCal канал (${source}) для ${room}`);
-              showNotificationToast('Канал успішно вилучено.');
-            } catch (e) {
-              console.error(e);
+              const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id);
+              await deleteDoc(docRef);
+              await logActivity(`Видалив витрату "${desc}"`);
+              showNotificationToast('Витрату видалено!');
+            } catch (err) {
+              console.error("Помилка видалення витрати: ", err);
             }
           }
         });
-      };
-
-      // ===== РЕАЛЬНА СИНХРОНІЗАЦІЯ iCal =====
-      const parseIcsText = (icsText, channel) => {
-        const events = [];
-        const lines = icsText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
-        let inEvent = false, current = {};
-        lines.forEach(line => {
-          if (line === 'BEGIN:VEVENT') { inEvent = true; current = {}; }
-          else if (line === 'END:VEVENT' && inEvent) {
-            inEvent = false;
-            if (current.dtstart && current.dtend) {
-              const fmt = (s) => {
-                const d = s.replace(/[^0-9]/g, '').substring(0, 8);
-                return `${d.substring(0,4)}-${d.substring(4,6)}-${d.substring(6,8)}`;
-              };
-              events.push({
-                guestName: current.summary || `Зайнято (${channel.source})`,
-                roomName: channel.roomName,
-                checkIn: fmt(current.dtstart),
-                checkOut: fmt(current.dtend),
-                price: 0, prepayment: 0,
-                status: 'ICAL',
-                isFullyPaid: true,
-                createdBy: `${channel.source} iCal`
-              });
-            }
-          } else if (inEvent) {
-            if (line.startsWith('DTSTART')) current.dtstart = line.split(':').pop();
-            else if (line.startsWith('DTEND')) current.dtend = line.split(':').pop();
-            else if (line.startsWith('SUMMARY')) current.summary = line.split(':').slice(1).join(':');
-          }
-        });
-        return events;
-      };
-
-      const handleTriggerSync = async () => {
-        setIsSyncingIcal(true);
-        setSyncStatus('connecting');
-
-        if (isOfflineMode) {
-          setTimeout(() => {
-            setIsSyncingIcal(false);
-            setSyncStatus('synced');
-            showNotificationToast('⚠️ iCal синхронізація недоступна в офлайн-режимі');
-          }, 800);
-          return;
-        }
-
-        if (!window.firebaseServices || icalChannels.length === 0) {
-          setIsSyncingIcal(false);
-          setSyncStatus('synced');
-          showNotificationToast('Немає підключених каналів iCal');
-          return;
-        }
-
-        const { db, appId, collection, addDoc, doc, deleteDoc } = window.firebaseServices;
-
-        try {
-          // 1. Видаляємо старі iCal бронювання
-          const oldIcalBookings = bookings.filter(b => b.status === 'ICAL');
-          for (const b of oldIcalBookings) {
-            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'bookings', b.id));
-          }
-
-          const bookingsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'bookings');
-          let totalImported = 0;
-          let failedChannels = 0;
-
-          // 2. Завантажуємо реальні дані з кожного каналу
-          for (const channel of icalChannels) {
-            try {
-              // Пробуємо через proxy (уникає CORS)
-              const proxyUrl = `${ICAL_PROXY_URL}?url=${encodeURIComponent(channel.url)}`;
-              const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(10000) });
-              if (!res.ok) throw new Error(`HTTP ${res.status}`);
-              const icsText = await res.text();
-              const events = parseIcsText(icsText, channel);
-
-              for (const ev of events) {
-                await addDoc(bookingsCollection, ev);
-                totalImported++;
-              }
-            } catch (fetchErr) {
-              console.warn(`Не вдалось отримати ${channel.source}: ${fetchErr.message}`);
-              failedChannels++;
-              // Додаємо placeholder щоб показати що канал є
-              await addDoc(bookingsCollection, {
-                guestName: `⚠️ Потрібен proxy (${channel.source})`,
-                roomName: channel.roomName,
-                checkIn: new Date().toISOString().split('T')[0],
-                checkOut: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-                price: 0, prepayment: 0,
-                status: 'ICAL',
-                isFullyPaid: true,
-                createdBy: `${channel.source} iCal`
-              });
-            }
-          }
-
-          await logActivity(`Синхронізація iCal: ${totalImported} подій імпортовано, ${failedChannels} каналів потребують proxy.`);
-          
-          if (failedChannels > 0) {
-            showNotificationToast(`⚠️ ${failedChannels} канал(ів) потребують Cloudflare proxy. Налаштуйте у розділі "Ще".`);
-          } else {
-            showNotificationToast(`✅ Синхронізовано ${totalImported} подій!`);
-          }
-        } catch (err) {
-          console.error(err);
-          showNotificationToast('❌ Помилка синхронізації iCal');
-        } finally {
-          setIsSyncingIcal(false);
-          setSyncStatus('synced');
-        }
-      };
-
-      // ===== ФОНОВА АВТОСИНХРОНІЗАЦІЯ (кожні 30 хвилин) =====
-      useEffect(() => {
-        if (isOfflineMode || icalChannels.length === 0) return;
-        const interval = setInterval(() => {
-          handleTriggerSync();
-        }, 30 * 60 * 1000); // 30 хвилин
-        return () => clearInterval(interval);
-      }, [icalChannels, isOfflineMode]);
-
-      const handleExportIcsFile = (roomName) => {
-        const roomBookings = bookings.filter(b => b.roomName === roomName && b.status !== 'ICAL' && b.status !== 'CANCELLED');
-        let icsContent = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Kychera PMS//NONSGML v1.0//EN\r\n";
-        
-        roomBookings.forEach((b, idx) => {
-          const startFormatted = b.checkIn.replace(/-/g, '');
-          const endFormatted = b.checkOut.replace(/-/g, '');
-
-          icsContent += "BEGIN:VEVENT\r\n";
-          icsContent += `UID:booking-${b.id || idx}@kychera.com\r\n`;
-          icsContent += `DTSTAMP:20260518T120000Z\r\n`;
-          icsContent += `DTSTART;VALUE=DATE:${startFormatted}\r\n`;
-          icsContent += `DTEND;VALUE=DATE:${endFormatted}\r\n`;
-          icsContent += `SUMMARY:Зайнято Садиба Кичера (${b.guestName || 'Гість'})\r\n`;
-          icsContent += "END:VEVENT\r\n";
-        });
-
-        icsContent += "END:VCALENDAR";
-
-        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute('download', `${roomName.replace(/\s+/g, '_')}_bookings.ics`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        logActivity(`Експортував ICS-файл зайнятості для ${roomName}`);
-        showNotificationToast(`Файл зайнятості для ${roomName} завантажено!`);
-      };
-
-      const handleCopyIcsExportLink = (roomName) => {
-        // Генеруємо реальний iCal URL через Cloudflare Worker для експорту в Booking/Airbnb
-        const roomSlug = roomName.replace(/\s+/g, '_').replace(/[()]/g, '').toLowerCase();
-        const exportLink = `https://kychera-ical.wadim-r-k-36.workers.dev/export/${roomSlug}.ics`;
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(exportLink).then(() => {
-            showNotificationToast(`✅ iCal-посилання скопійовано для ${roomName}!`);
-          }).catch(() => {
-            const tempInput = document.createElement('input');
-            tempInput.value = exportLink;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempInput);
-            showNotificationToast(`✅ iCal-посилання скопійовано для ${roomName}!`);
-          });
-        } else {
-          const tempInput = document.createElement('input');
-          tempInput.value = exportLink;
-          document.body.appendChild(tempInput);
-          tempInput.select();
-          document.execCommand('copy');
-          document.body.removeChild(tempInput);
-          showNotificationToast(`✅ iCal-посилання скопійовано для ${roomName}!`);
-        }
       };
 
       const changeMonth = (offset) => {
@@ -827,7 +622,6 @@
 
         if (activeBookings.some(b => b.status === 'MANUAL_CLOSE')) return 'MANUAL_CLOSE';
         if (activeBookings.some(b => b.status === 'CONFIRMED' || b.status === 'CHECKED_IN')) return 'DIRECT_BOOKING';
-        if (activeBookings.some(b => b.status === 'ICAL')) return 'ICAL';
         return 'FREE';
       };
 
@@ -958,7 +752,7 @@
           } : b);
           setBookings(updated);
           localStorage.setItem('kychera_fallback_bookings', JSON.stringify(updated));
-          showNotificationToast(nextPaidState ? 'Оплачено повністю! Передплату анульовано.' : 'Статус оплати змінено');
+          showNotificationToast(nextPaidState ? 'Оплачено повністю!' : 'Статус оплати змінено');
           return;
         }
 
@@ -974,7 +768,7 @@
 
           await updateDoc(docRef, updatedFields);
           await logActivity(`Позначив бронювання ${bookingItem.guestName} як ${nextPaidState ? 'ОПЛАЧЕНЕ повністю' : 'НЕ ОПЛАЧЕНЕ повністю'}`);
-          showNotificationToast(nextPaidState ? 'Оплачено повністю! Передплату анульовано.' : 'Статус оплати змінено');
+          showNotificationToast(nextPaidState ? 'Оплачено повністю!' : 'Статус оплати змінено');
         } catch (e) {
           console.error(e);
         }
@@ -1121,8 +915,13 @@
         setIsAddEditModalOpen(true);
       };
 
+      // Фільтрація майбутніх бронювань: автоматично пропадають броні, дати яких вже пройшли (checkOut < todayStr)
+      const activeBookingsOnly = useMemo(() => {
+        return bookings.filter(b => b.checkOut >= todayStr);
+      }, [bookings, todayStr]);
+
       const filteredBookings = useMemo(() => {
-        return bookings.filter(b => {
+        return activeBookingsOnly.filter(b => {
           const term = searchTerm.toLowerCase();
           return (
             b.guestName?.toLowerCase().includes(term) ||
@@ -1131,20 +930,56 @@
             b.roomName?.toLowerCase().includes(term)
           );
         }).sort((a, b) => new Date(a.checkIn) - new Date(b.checkIn));
-      }, [bookings, searchTerm]);
+      }, [activeBookingsOnly, searchTerm]);
 
+      // Динамічний фінансовий звіт (досліджує всю базу бронювань для каси)
       const stats = useMemo(() => {
-        let revenue = 0, prepayment = 0;
+        let revenue = 0;      // Загальна каса (вартість усіх підтверджених броней)
+        let prepayment = 0;   // Загальна сума внесених передплат по незавершених платежах
+        let unpaid = 0;       // Скільки ще не доплатили (загальна вартість - передплата, де isFullyPaid === false)
+
         bookings.forEach(b => {
           if (b.status !== 'CANCELLED' && b.status !== 'MANUAL_CLOSE') {
-            revenue += b.price || 0;
-            if (!b.isFullyPaid) {
-              prepayment += b.prepayment || 0;
+            const bPrice = parseFloat(b.price) || 0;
+            const bPrepayment = parseFloat(b.prepayment) || 0;
+            
+            revenue += bPrice;
+            
+            if (b.isFullyPaid) {
+              // Якщо оплачено повністю, передплата не вважається невиплаченим залишком
+            } else {
+              prepayment += bPrepayment;
+              unpaid += Math.max(0, bPrice - bPrepayment);
             }
           }
         });
-        return { totalCash: revenue, totalPrepayment: prepayment };
+        return { totalCash: revenue, totalPrepayment: prepayment, outstanding: unpaid };
       }, [bookings]);
+
+      // Генерація фінансового звіту за конкретний обраний місяць
+      const monthlyReportData = useMemo(() => {
+        const targetYearMonth = `${reportYear}-${reportMonth}`; // Наприклад, '2026-05'
+        
+        // Доходи за місяць (на основі дати заїзду)
+        const monthBookings = bookings.filter(b => {
+          if (b.status === 'CANCELLED' || b.status === 'MANUAL_CLOSE') return false;
+          return b.checkIn && b.checkIn.startsWith(targetYearMonth);
+        });
+
+        const income = monthBookings.reduce((sum, b) => sum + (parseFloat(b.price) || 0), 0);
+        
+        // Витрати за місяць (на основі дати витрати)
+        const monthExpenses = expenses.filter(ex => ex.date && ex.date.startsWith(targetYearMonth));
+        const expenseTotal = monthExpenses.reduce((sum, ex) => sum + (parseFloat(ex.amount) || 0), 0);
+
+        return {
+          bookingsCount: monthBookings.length,
+          income,
+          expenseTotal,
+          profit: income - expenseTotal,
+          expensesList: monthExpenses
+        };
+      }, [bookings, expenses, reportMonth, reportYear]);
 
       const todayActivities = useMemo(() => {
         const checkIns = bookings.filter(b => b.checkIn === todayStr && b.status !== 'CANCELLED' && b.status !== 'MANUAL_CLOSE');
@@ -1156,10 +991,16 @@
         return currentDate.toLocaleDateString('uk-UA', { month: 'long', year: 'numeric' });
       }, [currentDate]);
 
-      // --- Список прямих гостей для блоку повідомлень ---
-      const directGuests = useMemo(() => {
-        return bookings.filter(b => b.status !== 'ICAL' && b.status !== 'MANUAL_CLOSE' && b.status !== 'CANCELLED' && b.guestPhone);
-      }, [bookings]);
+      // --- Список гостей для повідомлень з пошуком ---
+      const directGuestsFiltered = useMemo(() => {
+        const allDirect = bookings.filter(b => b.status !== 'MANUAL_CLOSE' && b.status !== 'CANCELLED' && b.guestPhone);
+        if (!chatSearchTerm.trim()) return allDirect;
+        const searchVal = chatSearchTerm.toLowerCase();
+        return allDirect.filter(b => 
+          (b.guestName && b.guestName.toLowerCase().includes(searchVal)) ||
+          (b.checkIn && b.checkIn.includes(searchVal))
+        );
+      }, [bookings, chatSearchTerm]);
 
       // Auto-dismiss remote change alert
       useEffect(() => {
@@ -1170,7 +1011,7 @@
 
       // --- Попередній перегляд тексту повідомлення ---
       const previewMessageText = useMemo(() => {
-        const guest = directGuests.find(g => g.id === selectedDirectGuestId);
+        const guest = bookings.find(g => g.id === selectedDirectGuestId);
         const template = customTemplates.find(t => t.id === selectedTemplateType);
         if (!template) return 'Оберіть шаблон...';
         if (!guest) return template.text.replace(/{Гість}/g, 'Гість').replace(/{Кімната}/g, 'Кімната').replace(/{Заїзд}/g, 'дд.мм.рррр').replace(/{Виїзд}/g, 'дд.мм.рррр').replace(/{Ціна}/g, '0').replace(/{Передплата}/g, '0');
@@ -1182,11 +1023,11 @@
           .replace(/{Виїзд}/g, fmt(guest.checkOut))
           .replace(/{Ціна}/g, (guest.price || 0).toLocaleString())
           .replace(/{Передплата}/g, (guest.prepayment || 0).toLocaleString());
-      }, [selectedDirectGuestId, selectedTemplateType, customTemplates, directGuests]);
+      }, [selectedDirectGuestId, selectedTemplateType, customTemplates, bookings]);
 
       // --- Посилання для месенджерів ---
       const messengerUrls = useMemo(() => {
-        const guest = directGuests.find(g => g.id === selectedDirectGuestId);
+        const guest = bookings.find(g => g.id === selectedDirectGuestId);
         const phone = guest?.guestPhone?.replace(/\D/g, '') || '';
         const encodedText = encodeURIComponent(previewMessageText);
         return {
@@ -1195,7 +1036,7 @@
           viber: `viber://chat?number=%2B${phone}&draft=${encodedText}`,
           sms: `sms:+${phone}${/iPhone|iPad|iPod/i.test(navigator.userAgent) ? '&' : '?'}body=${encodedText}`
         };
-      }, [selectedDirectGuestId, previewMessageText, directGuests]);
+      }, [selectedDirectGuestId, previewMessageText, bookings]);
 
       // --- Копіювання в буфер ---
       const handleCopyToClipboard = () => {
@@ -1231,14 +1072,14 @@
       return (
         <div className="min-h-screen bg-[#fafbfc] text-slate-800 flex flex-col pb-24 selection:bg-indigo-100">
           
-          {/* Toast-сповіщення (власні дії) */}
+          {/* Toast-сповіщення */}
           {activeBanner && (
             <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] bg-slate-900 text-white text-xs font-bold px-5 py-3 rounded-2xl shadow-xl toast-animate max-w-[90vw] text-center pointer-events-none">
               {activeBanner}
             </div>
           )}
 
-          {/* Сповіщення від ІНШИХ операторів (real-time) */}
+          {/* Сповіщення від інших операторів */}
           {remoteChangeAlert && (
             <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[199] bg-indigo-600 text-white text-xs font-bold px-5 py-3 rounded-2xl shadow-xl toast-animate max-w-[90vw] text-center flex items-center gap-2">
               <span className="w-2 h-2 bg-white rounded-full pulse-dot shrink-0"></span>
@@ -1248,11 +1089,11 @@
           )}
 
           {/* Хедер */}
-          <header className="bg-white border-b border-slate-100 py-3.5 px-4 sticky top-0 z-40 flex items-center justify-between shadow-sm">
+          <header className="bg-white border-b border-slate-100 py-3.5 px-4 top-0 z-40 flex items-center justify-between shadow-sm">
             <div className="flex items-center space-x-2">
               <div className="bg-[#4f46e5] text-white font-extrabold w-9 h-9 rounded-xl flex items-center justify-center text-sm shadow">КЕ</div>
               <div>
-                <h1 className="text-sm font-black text-slate-900 leading-none font-bold">Кичера Еко</h1>
+                <h1 className="text-sm font-black text-slate-900 leading-none font-bold">Садиба Кичера</h1>
                 <span className="text-[10px] text-slate-400 block mt-0.5">Оператор: <strong className="text-[#4f46e5]">{userName || 'Авторизація...'}</strong></span>
               </div>
             </div>
@@ -1260,20 +1101,20 @@
             <div className="flex items-center space-x-2">
               <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border flex items-center gap-1 ${syncStatus === 'synced' && !isOfflineMode ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${syncStatus === 'synced' && !isOfflineMode ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`}></span>
-                {isOfflineMode ? 'Автономний режим' : syncStatus === 'synced' ? 'Синхронізовано' : 'Хмара...'}
+                {isOfflineMode ? 'Локальний режим' : syncStatus === 'synced' ? 'Хмара підключена' : 'З\'єднання...'}
               </span>
               <button onClick={() => { setTempName(userName); setIsNamePromptOpen(true); }} className="p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-100"><UserIcon /></button>
             </div>
           </header>
 
-          {/* Фінансовий Дашборд */}
+          {/* Статичний швидкий інфо-бар */}
           <div className="bg-white border-b border-slate-100 p-4 grid grid-cols-2 gap-3 shadow-sm max-w-md mx-auto w-full">
             <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100">
               <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Загальна каса</span>
               <strong className="text-base font-black text-slate-900">{stats.totalCash.toLocaleString()} ₴</strong>
             </div>
             <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100">
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Передплати (в утриманні)</span>
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Передплати (утримання)</span>
               <strong className="text-base font-black text-indigo-700">{stats.totalPrepayment.toLocaleString()} ₴</strong>
             </div>
           </div>
@@ -1347,38 +1188,27 @@
                   </div>
                 </div>
 
-                {/* Швидка синхронізація */}
-                <div className="bg-white p-4 rounded-xl border border-slate-150 shadow-sm space-y-3">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h4 className="text-xs font-black uppercase text-slate-900">Синхронізація каналів</h4>
-                      <p className="text-[10px] text-slate-400 mt-0.5">Підключено джерел: {icalChannels.length}</p>
-                    </div>
-                    <button
-                      onClick={handleTriggerSync}
-                      disabled={isSyncingIcal}
-                      className="bg-[#4f46e5] hover:bg-indigo-700 text-white p-2.5 rounded-xl text-xs font-bold flex items-center gap-1 shadow transition disabled:opacity-55"
-                    >
-                      <RefreshIcon /> Sync (iCal)
-                    </button>
-                  </div>
-                </div>
-
               </div>
             )}
 
-            {/* Вкладка 2: Бронювання */}
+            {/* Вкладка 2: Бронювання (З автоматичним фільтром минулих бронювань) */}
             {activeTab === 'bookings' && (
               <div className="space-y-4">
                 <div className="relative">
-                  <SearchIcon />
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                    <SearchIcon />
+                  </span>
                   <input 
                     type="text" 
-                    placeholder="Шукати за ім'ям, телефоном або котеджем..."
+                    placeholder="Шукати майбутні броні за ім'ям, тел..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-medium"
                   />
+                </div>
+
+                <div className="bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-100/50 text-[10px] text-indigo-700 font-semibold text-center">
+                  ⚠️ Минулі броні (де дата виїзду пройшла) приховуються автоматично.
                 </div>
 
                 <div className="space-y-3">
@@ -1395,11 +1225,10 @@
                             </div>
                             <div className="flex flex-col items-end gap-1">
                               <span className={`px-2 py-0.5 text-[9px] font-extrabold border rounded-full ${
-                                b.status === 'ICAL' ? 'bg-amber-50 text-amber-700 border-amber-200' : 
                                 b.status === 'MANUAL_CLOSE' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-blue-50 text-blue-700 border-blue-200'
-                              }`}>{b.status === 'ICAL' ? 'iCal синхро' : b.status === 'MANUAL_CLOSE' ? 'Тех. закриття' : 'Пряма бронь'}</span>
+                              }`}>{b.status === 'MANUAL_CLOSE' ? 'Тех. закриття' : 'Пряма бронь'}</span>
 
-                              {b.status !== 'ICAL' && b.status !== 'MANUAL_CLOSE' && (
+                              {b.status !== 'MANUAL_CLOSE' && (
                                 b.isFullyPaid ? (
                                   <span className="bg-emerald-100 text-emerald-800 text-[9px] font-black px-2 py-0.5 rounded-full border border-emerald-200">💵 Оплачено 100%</span>
                                 ) : (
@@ -1414,7 +1243,7 @@
                               <span>Термін проживання:</span>
                               <strong className="font-extrabold text-[#4f46e5]">{b.checkIn} — {b.checkOut}</strong>
                             </div>
-                            {b.status !== 'ICAL' && b.status !== 'MANUAL_CLOSE' && (
+                            {b.status !== 'MANUAL_CLOSE' && (
                               <>
                                 <div className="flex justify-between text-slate-600">
                                   <span>Вартість:</span>
@@ -1439,7 +1268,7 @@
                           <div className="flex justify-between items-center border-t border-slate-100 pt-2.5">
                             <span className="text-[10px] text-slate-400">Створив: <strong>{b.createdBy || 'Адмін'}</strong></span>
                             <div className="flex items-center space-x-2">
-                              {b.status !== 'ICAL' && b.status !== 'MANUAL_CLOSE' && (
+                              {b.status !== 'MANUAL_CLOSE' && (
                                 <button
                                   onClick={() => handleToggleFullyPaid(b)}
                                   className={`p-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 transition ${
@@ -1451,19 +1280,17 @@
                                   <CheckIcon /> {b.isFullyPaid ? 'Скасувати' : 'Повна оплата'}
                                 </button>
                               )}
-                              {b.status !== 'ICAL' && (
-                                <div className="flex items-center space-x-1">
-                                  <button onClick={() => openEditModal(b)} className="p-1.5 text-blue-600 bg-slate-50 rounded-md border border-slate-200"><EditIcon /></button>
-                                  <button onClick={(e) => handleDeleteBooking(e, b.id, b.guestName)} className="p-1.5 text-rose-600 bg-rose-50 rounded-md border border-rose-200"><TrashIcon /></button>
-                                </div>
-                              )}
+                              <div className="flex items-center space-x-1">
+                                <button onClick={() => openEditModal(b)} className="p-1.5 text-blue-600 bg-slate-50 rounded-md border border-slate-200"><EditIcon /></button>
+                                <button onClick={(e) => handleDeleteBooking(e, b.id, b.guestName)} className="p-1.5 text-rose-600 bg-rose-50 rounded-md border border-rose-200"><TrashIcon /></button>
+                              </div>
                             </div>
                           </div>
                         </div>
                       );
                     })
                   ) : (
-                    <p className="text-xs text-slate-400 text-center py-12 font-medium">Бронювань не знайдено.</p>
+                    <p className="text-xs text-slate-400 text-center py-12 font-medium">Активних бронювань не знайдено.</p>
                   )}
                 </div>
               </div>
@@ -1505,7 +1332,6 @@
                         dayStyleClasses = 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60';
                       } else {
                         if (status === 'FREE') dayStyleClasses = 'bg-emerald-50/60 text-emerald-800 border-emerald-100 hover:bg-emerald-100/50';
-                        else if (status === 'ICAL') dayStyleClasses = 'bg-[#fefce8] border-amber-300 text-amber-900';
                         else if (status === 'MANUAL_CLOSE') dayStyleClasses = 'border-rose-400 text-slate-700 bg-stripes';
                         else if (status === 'DIRECT_BOOKING') dayStyleClasses = 'bg-blue-50/60 border-blue-400 text-blue-900';
                       }
@@ -1522,7 +1348,6 @@
 
                   <div className="mt-5 border-t border-slate-100 pt-4 grid grid-cols-2 gap-2 text-[10px] text-slate-500 font-bold">
                     <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded bg-emerald-50 border border-emerald-100 inline-block"></span><span>Відкрито</span></div>
-                    <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded bg-amber-50 border border-amber-300 inline-block"></span><span>Airbnb/Booking (Жовте)</span></div>
                     <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded border border-rose-400 bg-stripes inline-block"></span><span>Закрито вручну</span></div>
                     <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded bg-blue-50 border border-blue-400 inline-block"></span><span>Пряма бронь (Синє)</span></div>
                   </div>
@@ -1555,21 +1380,47 @@
               <div className="space-y-4">
                 <div className="bg-white rounded-xl border border-slate-100 p-2.5 shadow-sm flex justify-around">
                   <button onClick={() => setIsEditingTemplates(false)} className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${!isEditingTemplates ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500'}`}><SendIcon /> ВІДПРАВИТИ</button>
-                  <button onClick={() => setIsEditingTemplates(true)} className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${isEditingTemplates ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500'}`}><PlusCircleIcon /> КЕРУВАТИ ШАБЛОНАМИ</button>
+                  <button onClick={() => setIsEditingTemplates(true)} className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${isEditingTemplates ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500'}`}><PlusCircleIcon /> ШАБЛОНИ</button>
                 </div>
 
                 {!isEditingTemplates ? (
                   <div className="space-y-4">
-                    <div className="bg-white p-4 rounded-xl border border-slate-150 shadow-sm space-y-2">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase">Оберіть прямого гостя</span>
-                      <select value={selectedDirectGuestId} onChange={(e) => setSelectedDirectGuestId(e.target.value)} className="w-full px-3 py-2.5 bg-slate-50 border rounded-xl text-xs font-bold text-slate-700 focus:outline-none">
-                        <option value="">-- Оберіть зі списку --</option>
-                        {directGuests.map(g => <option key={g.id} value={g.id}>{g.guestName} ({g.roomName})</option>)}
+                    
+                    {/* Вибір гостя + ПОШУК */}
+                    <div className="bg-white p-4 rounded-xl border border-slate-150 shadow-sm space-y-3">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">1. Знайдіть та оберіть гостя</span>
+                      
+                      {/* Рядок пошуку */}
+                      <div className="relative">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400">
+                          <SearchIcon />
+                        </span>
+                        <input 
+                          type="text" 
+                          placeholder="Пошук за іменем або датою (напр: 2026-05)..."
+                          value={chatSearchTerm}
+                          onChange={(e) => setChatSearchTerm(e.target.value)}
+                          className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none font-medium"
+                        />
+                      </div>
+
+                      {/* Селектор */}
+                      <select 
+                        value={selectedDirectGuestId} 
+                        onChange={(e) => setSelectedDirectGuestId(e.target.value)} 
+                        className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none"
+                      >
+                        <option value="">-- Оберіть гостя ({directGuestsFiltered.length} знайдено) --</option>
+                        {directGuestsFiltered.map(g => (
+                          <option key={g.id} value={g.id}>
+                            {g.guestName} ({g.checkIn}) — {g.roomName}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
                     <div className="bg-white p-4 rounded-xl border border-slate-150 shadow-sm space-y-2">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase">Оберіть шаблон повідомлення</span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">2. Оберіть шаблон повідомлення</span>
                       <div className="flex flex-wrap gap-1.5">
                         {customTemplates.map(t => (
                           <button key={t.id} type="button" onClick={() => setSelectedTemplateType(t.id)} className={`py-2 px-3 rounded-lg text-[10px] font-black uppercase border transition ${selectedTemplateType === t.id ? 'bg-[#4f46e5] text-white' : 'bg-slate-50 text-slate-600'}`}>{t.label}</button>
@@ -1579,27 +1430,29 @@
 
                     <div className="bg-white p-4 rounded-xl border border-slate-150 shadow-sm space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase">Текст передперегляду</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">Попередній перегляд</span>
                         <button onClick={handleCopyToClipboard} className="text-xs font-bold text-[#4f46e5] flex items-center gap-1"><CopyIcon /> Копіювати</button>
                       </div>
                       <p className="text-xs text-slate-700 bg-slate-50 p-3 rounded-xl border italic whitespace-pre-line leading-relaxed">{previewMessageText}</p>
                     </div>
 
                     <div className="bg-white p-4 rounded-xl border border-slate-150 shadow-sm space-y-3">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase block">Відправити через месенджер</span>
                       <div className="grid grid-cols-2 gap-2">
-                        <a href={selectedDirectGuestId ? messengerUrls.whatsapp : '#'} target="_blank" rel="noopener noreferrer" className="bg-[#10b981] text-white py-3 rounded-xl text-center text-xs font-bold">WhatsApp</a>
-                        <a href={selectedDirectGuestId ? messengerUrls.telegram : '#'} target="_blank" rel="noopener noreferrer" className="bg-[#2563eb] text-white py-3 rounded-xl text-center text-xs font-bold">Telegram</a>
-                        <a href={selectedDirectGuestId ? messengerUrls.viber : '#'} target="_blank" rel="noopener noreferrer" className="bg-[#7360f2] text-white py-3 rounded-xl text-center text-xs font-bold">Viber</a>
-                        <a href={selectedDirectGuestId ? messengerUrls.sms : '#'} className="bg-slate-700 text-white py-3 rounded-xl text-center text-xs font-bold">SMS</a>
+                        <a href={selectedDirectGuestId ? messengerUrls.whatsapp : '#'} target="_blank" rel="noopener noreferrer" className="bg-[#10b981] text-white py-3 rounded-xl text-center text-xs font-bold transition hover:opacity-90">WhatsApp</a>
+                        <a href={selectedDirectGuestId ? messengerUrls.telegram : '#'} target="_blank" rel="noopener noreferrer" className="bg-[#2563eb] text-white py-3 rounded-xl text-center text-xs font-bold transition hover:opacity-90">Telegram</a>
+                        <a href={selectedDirectGuestId ? messengerUrls.viber : '#'} target="_blank" rel="noopener noreferrer" className="bg-[#7360f2] text-white py-3 rounded-xl text-center text-xs font-bold transition hover:opacity-90">Viber</a>
+                        <a href={selectedDirectGuestId ? messengerUrls.sms : '#'} className="bg-slate-700 text-white py-3 rounded-xl text-center text-xs font-bold transition hover:opacity-90">SMS</a>
                       </div>
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <form onSubmit={handleAddNewTemplate} className="bg-white p-4 rounded-xl border space-y-3">
-                      <input type="text" required placeholder="НАЗВА ШАБЛОНУ" value={newTemplateLabel} onChange={(e) => setNewTemplateLabel(e.target.value)} className="w-full px-3 py-2 bg-slate-50 border rounded-lg text-xs" />
-                      <textarea required placeholder="Текст повідомлення..." rows="4" value={newTemplateText} onChange={(e) => setNewTemplateText(e.target.value)} className="w-full p-2.5 bg-slate-50 border rounded-lg text-xs" />
-                      <button type="submit" className="w-full bg-[#4f46e5] text-white py-2.5 rounded-xl text-xs font-bold">Зберегти шаблон</button>
+                    <form onSubmit={handleAddNewTemplate} className="bg-white p-4 rounded-xl border space-y-3 shadow-sm">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase block">Новий шаблон</span>
+                      <input type="text" required placeholder="НАЗВА (напр: ПРАВИЛА)" value={newTemplateLabel} onChange={(e) => setNewTemplateLabel(e.target.value)} className="w-full px-3 py-2 bg-slate-50 border rounded-lg text-xs" />
+                      <textarea required placeholder="Текст шаблону. Можна використовувати теги: {Гість}, {Кімната}, {Заїзд}, {Виїзд}, {Ціна}, {Передплата}" rows="5" value={newTemplateText} onChange={(e) => setNewTemplateText(e.target.value)} className="w-full p-2.5 bg-slate-50 border rounded-lg text-xs" />
+                      <button type="submit" className="w-full bg-[#4f46e5] text-white py-2.5 rounded-xl text-xs font-bold">Зберегти новий шаблон</button>
                     </form>
                   </div>
                 )}
@@ -1608,105 +1461,247 @@
 
             {/* Вкладка 5: Ще */}
             {activeTab === 'more' && (
-              <div className="space-y-6">
+              <div className="space-y-5">
                 
-                {/* Керування номерами */}
-                <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-4">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Управління номерами садиби</span>
-                  <div className="space-y-2">
-                    {rooms.map(rName => (
-                      <div key={rName} className="p-3 bg-slate-50 rounded-xl border flex justify-between items-center text-xs">
-                        <span className="font-extrabold text-slate-800">{rName}</span>
-                        <button onClick={() => handleDeleteRoom(rName)} className="text-rose-600 font-bold">Видалити</button>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <input type="text" placeholder="Назва котеджу..." value={newRoomName} onChange={(e) => setNewRoomName(e.target.value)} className="flex-1 px-3 py-2 bg-slate-50 border rounded-xl text-xs" />
-                    <button onClick={handleAddRoom} className="bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold">Додати</button>
-                  </div>
+                {/* Меню підвкладок вкладки "Ще" */}
+                <div className="bg-white rounded-xl border border-slate-150 p-1 flex shadow-sm">
+                  <button 
+                    onClick={() => setMoreSubTab('rooms')} 
+                    className={`flex-1 py-2 text-[11px] font-bold rounded-lg text-center transition ${moreSubTab === 'rooms' ? 'bg-[#4f46e5] text-white' : 'text-slate-500 hover:text-slate-800'}`}
+                  >
+                    Номери
+                  </button>
+                  <button 
+                    onClick={() => setMoreSubTab('finance')} 
+                    className={`flex-1 py-2 text-[11px] font-bold rounded-lg text-center transition flex items-center justify-center gap-1 ${moreSubTab === 'finance' ? 'bg-[#4f46e5] text-white' : 'text-slate-500 hover:text-slate-800'}`}
+                  >
+                    <WalletIcon /> Фінанси
+                  </button>
+                  <button 
+                    onClick={() => setMoreSubTab('expenses')} 
+                    className={`flex-1 py-2 text-[11px] font-bold rounded-lg text-center transition ${moreSubTab === 'expenses' ? 'bg-[#4f46e5] text-white' : 'text-slate-500 hover:text-slate-800'}`}
+                  >
+                    Витрати
+                  </button>
                 </div>
 
-                {/* iCal Імпорт */}
-                <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-4">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Синхронізація iCal (Airbnb / Booking)</span>
-                  <form onSubmit={handleIcalImport} className="space-y-3">
-                    <input type="url" required placeholder="Вставте iCal посилання тут..." value={icalUrlInput} onChange={(e) => setIcalUrlInput(e.target.value)} className="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs" />
-                    <div className="grid grid-cols-2 gap-2">
-                      <select value={icalRoomSelect} onChange={(e) => setIcalRoomSelect(e.target.value)} className="px-3 py-2 bg-slate-50 border rounded-xl text-xs">
-                        {rooms.map(r => <option key={r} value={r}>{r}</option>)}
-                      </select>
-                      <select value={icalSourceSelect} onChange={(e) => setIcalSourceSelect(e.target.value)} className="px-3 py-2 bg-slate-50 border rounded-xl text-xs">
-                        <option value="Airbnb">Airbnb</option>
-                        <option value="Booking">Booking.com</option>
-                      </select>
-                    </div>
-                    <button type="submit" className="w-full bg-slate-950 text-white py-2.5 rounded-xl text-xs font-bold">Імпортувати канал</button>
-                  </form>
-
-                  {/* Активні канали */}
-                  {icalChannels.length > 0 && (
+                {/* ПІДВКЛАДКА: КЕРУВАННЯ НОМЕРАМИ */}
+                {moreSubTab === 'rooms' && (
+                  <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-4">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Управління номерами садиби</span>
                     <div className="space-y-2">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase block">Активні канали ({icalChannels.length})</span>
-                      {icalChannels.map(ch => (
-                        <div key={ch.id} className="flex items-center justify-between p-2.5 bg-amber-50 border border-amber-200 rounded-xl">
-                          <div>
-                            <span className="text-[10px] font-black text-amber-800 block">{ch.source} → {ch.roomName}</span>
-                            <span className="text-[9px] text-amber-600 block truncate max-w-[180px]">{ch.url}</span>
-                          </div>
-                          <button onClick={() => handleDeleteIcalChannel(ch.id, ch.roomName, ch.source)} className="text-rose-500 text-[10px] font-bold ml-2 shrink-0">✕</button>
+                      {rooms.map(rName => (
+                        <div key={rName} className="p-3 bg-slate-50 rounded-xl border flex justify-between items-center text-xs">
+                          <span className="font-extrabold text-slate-800">{rName}</span>
+                          <button onClick={() => handleDeleteRoom(rName)} className="text-rose-600 font-bold hover:text-rose-800">Видалити</button>
                         </div>
                       ))}
-                      <button onClick={handleTriggerSync} disabled={isSyncingIcal} className="w-full bg-amber-500 hover:bg-amber-600 text-white py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50">
-                        <RefreshIcon /> {isSyncingIcal ? 'Синхронізація...' : '🔄 Синхронізувати зараз'}
-                      </button>
                     </div>
-                  )}
 
-                  {/* Інструкція Cloudflare Proxy */}
-                  <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3 space-y-2">
-                    <span className="text-[10px] font-black text-indigo-700 uppercase block">⚡ Потрібен Cloudflare Proxy для реального iCal</span>
-                    <p className="text-[10px] text-indigo-600 leading-relaxed">1. Зайдіть на <strong>workers.cloudflare.com</strong> (безкоштовно)<br/>2. Створіть Worker → вставте код нижче → Deploy<br/>3. Вкажіть URL воркера у коді (рядок ICAL_PROXY_URL)</p>
-                    <div className="bg-slate-900 text-green-400 p-2.5 rounded-lg text-[9px] font-mono leading-relaxed overflow-x-auto">
-                      {`export default {\n  async fetch(req) {\n    const u = new URL(req.url);\n    const t = u.searchParams.get('url');\n    if(!t) return new Response('err',{status:400});\n    const r = await fetch(t);\n    const txt = await r.text();\n    return new Response(txt,{headers:{\n      'Content-Type':'text/calendar',\n      'Access-Control-Allow-Origin':'*'\n    }});\n  }\n}`}
+                    <div className="flex gap-2">
+                      <input type="text" placeholder="Назва котеджу..." value={newRoomName} onChange={(e) => setNewRoomName(e.target.value)} className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none" />
+                      <button onClick={handleAddRoom} className="bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold transition hover:bg-black">Додати</button>
                     </div>
                   </div>
-                </div>
+                )}
 
-                {/* ICS Експорт */}
-                <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-4">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Експорт календаря</span>
-                  <p className="text-[10px] text-slate-500 leading-relaxed">Скопіюйте iCal-посилання і вставте його у Booking.com або Airbnb для синхронізації зайнятості.</p>
-                  <div className="space-y-3">
-                    {rooms.map(r => (
-                      <div key={r} className="p-4 bg-slate-50 border rounded-xl space-y-2.5">
-                        <span className="text-xs font-bold block">{r}</span>
-                        <div className="flex flex-col gap-2">
-                          <button onClick={() => handleCopyIcsExportLink(r)} className="w-full bg-indigo-600 text-white px-3 py-2 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1.5"><CopyIcon /> Копіювати iCal для Booking / Airbnb</button>
-                          <button onClick={() => handleExportIcsFile(r)} className="w-full bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-[10px] font-bold">Скачати .ICS файл</button>
+                {/* ПІДВКЛАДКА: ФІНАНСИ */}
+                {moreSubTab === 'finance' && (
+                  <div className="space-y-4">
+                    
+                    {/* Базовий фінансовий стан */}
+                    <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-4">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Стан каси</h3>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                          <span className="text-xs text-slate-500 font-medium">Загальний дохід (Каса):</span>
+                          <strong className="text-sm font-extrabold text-slate-900">{stats.totalCash.toLocaleString()} ₴</strong>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                          <span className="text-xs text-slate-500 font-medium">Утримано передплат:</span>
+                          <strong className="text-sm font-extrabold text-indigo-700">{stats.totalPrepayment.toLocaleString()} ₴</strong>
+                        </div>
+                        <div className="flex justify-between items-center py-2">
+                          <span className="text-xs text-slate-500 font-medium">Ще не доплатили гості:</span>
+                          <strong className="text-sm font-extrabold text-rose-600">{stats.outstanding.toLocaleString()} ₴</strong>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-                    <p className="text-[10px] text-amber-800 leading-relaxed"><strong>Як використати:</strong><br/>1. Натисніть «Копіювати iCal» для потрібної кімнати<br/>2. У Booking.com: Об'єкти → Доступність → iCal → Вставте посилання<br/>3. В Airbnb: Управління оголошенням → Доступність → Синхронізація календаря → Вставте посилання</p>
-                  </div>
-                </div>
+                    </div>
 
-                {/* PWA Встановлення */}
-                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-5 rounded-2xl shadow-sm space-y-3 text-white">
-                  <span className="text-[10px] font-black uppercase tracking-wider block opacity-80">📱 Встановити як додаток</span>
-                  <p className="text-xs font-bold leading-relaxed">Додайте сайт на головний екран для роботи як повноцінний додаток (iOS, Android, MacOS)</p>
-                  <div className="space-y-2 text-[10px] opacity-90">
-                    <div className="flex items-start gap-2"><span>🍎</span><span><strong>iPhone/iPad:</strong> Safari → кнопка «Поділитися» → «На екран «Додому»»</span></div>
-                    <div className="flex items-start gap-2"><span>🤖</span><span><strong>Android:</strong> Chrome → меню ⋮ → «Додати на головний екран»</span></div>
-                    <div className="flex items-start gap-2"><span>💻</span><span><strong>Mac/PC:</strong> Chrome/Edge → іконка ⊕ у адресному рядку → «Встановити»</span></div>
+                    {/* Звіт за місяць */}
+                    <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-4">
+                      <div className="flex justify-between items-center border-b pb-2">
+                        <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">Звіт за місяць</h3>
+                        <div className="flex gap-1.5">
+                          {/* Селектор Місяця */}
+                          <select 
+                            value={reportMonth} 
+                            onChange={(e) => setReportMonth(e.target.value)}
+                            className="bg-slate-100 border-0 text-[10px] font-bold rounded-md py-1 px-1.5 text-slate-700 focus:outline-none focus:ring-0"
+                          >
+                            {['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => (
+                              <option key={m} value={m}>{m}</option>
+                            ))}
+                          </select>
+                          {/* Селектор Року */}
+                          <select 
+                            value={reportYear} 
+                            onChange={(e) => setReportYear(e.target.value)}
+                            className="bg-slate-100 border-0 text-[10px] font-bold rounded-md py-1 px-1.5 text-slate-700 focus:outline-none focus:ring-0"
+                          >
+                            {['2025','2026','2027','2028'].map(y => (
+                              <option key={y} value={y}>{y}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+                          <span className="text-[9px] font-bold text-emerald-700 uppercase block">Дохід (Заїзди)</span>
+                          <strong className="text-sm font-black text-emerald-800">+{monthlyReportData.income.toLocaleString()} ₴</strong>
+                          <span className="text-[8px] text-emerald-600 block mt-0.5">Кількість: {monthlyReportData.bookingsCount}</span>
+                        </div>
+                        <div className="bg-rose-50 p-3 rounded-xl border border-rose-100">
+                          <span className="text-[9px] font-bold text-rose-700 uppercase block">Витрати</span>
+                          <strong className="text-sm font-black text-rose-800">-{monthlyReportData.expenseTotal.toLocaleString()} ₴</strong>
+                          <span className="text-[8px] text-rose-600 block mt-0.5">Записів: {monthlyReportData.expensesList.length}</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-indigo-50/50 p-3.5 rounded-xl border border-indigo-100 flex justify-between items-center">
+                        <div>
+                          <strong className="text-xs text-indigo-900 font-extrabold block">Чистий прибуток</strong>
+                          <span className="text-[9px] text-indigo-500">Доходи мінус витрати за обраний місяць</span>
+                        </div>
+                        <strong className={`text-sm font-black ${monthlyReportData.profit >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                          {monthlyReportData.profit.toLocaleString()} ₴
+                        </strong>
+                      </div>
+
+                      {/* Маленький реєстр витрат у звіті */}
+                      {monthlyReportData.expensesList.length > 0 && (
+                        <div className="space-y-1.5 pt-2">
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Деталі витрат за місяць:</span>
+                          <div className="max-h-36 overflow-y-auto space-y-1 pr-1 font-medium">
+                            {monthlyReportData.expensesList.map(ex => (
+                              <div key={ex.id} className="text-[10px] bg-slate-50 p-2 rounded-lg border border-slate-100 flex justify-between items-center">
+                                <div>
+                                  <span className="font-extrabold text-slate-800 block">{ex.description}</span>
+                                  <span className="text-[8px] text-slate-400">{ex.date}</span>
+                                </div>
+                                <span className="text-rose-600 font-bold">-{ex.amount} ₴</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                   </div>
-                  <div className="bg-white/20 rounded-xl p-3 text-[10px]">
-                    <strong>✅ Після встановлення:</strong> автоматична синхронізація кожні 30 хв, повідомлення від інших операторів в реальному часі, робота без браузера
+                )}
+
+                {/* ПІДВКЛАДКА: ВИТРАТИ */}
+                {moreSubTab === 'expenses' && (
+                  <div className="space-y-4">
+                    
+                    {/* Форма додавання витрати */}
+                    <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-4">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase block tracking-wider">Зафіксувати нову витрату</span>
+                      <form onSubmit={handleAddExpense} className="space-y-3">
+                        
+                        {/* Опис з тегами */}
+                        <div>
+                          <label className="text-[9px] text-slate-400 font-bold block mb-1">Опис витрати / Категорія</label>
+                          <input 
+                            type="text" 
+                            required 
+                            placeholder="Прибирання, комуналка, ремонт..." 
+                            value={expenseDesc} 
+                            onChange={(e) => setExpenseDesc(e.target.value)} 
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-bold" 
+                          />
+                          
+                          {/* Швидкі теги */}
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            {['Комуналка', 'Прибирання', 'Ремонт', 'Закупівля', 'Зарплата', 'Інтернет', 'Прасування'].map(tag => (
+                              <button
+                                key={tag}
+                                type="button"
+                                onClick={() => setExpenseDesc(tag)}
+                                className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-[#4f46e5] rounded-md text-[9px] font-bold border border-indigo-100/50 transition"
+                              >
+                                + {tag}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[9px] text-slate-400 font-bold block mb-1">Сума (₴)</label>
+                            <input 
+                              type="number" 
+                              required 
+                              min="0.1" 
+                              step="any" 
+                              placeholder="0" 
+                              value={expenseAmount} 
+                              onChange={(e) => setExpenseAmount(e.target.value)} 
+                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-bold" 
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[9px] text-slate-400 font-bold block mb-1">Дата витрати</label>
+                            <input 
+                              type="date" 
+                              required 
+                              value={expenseDate} 
+                              onChange={(e) => setExpenseDate(e.target.value)} 
+                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none font-medium" 
+                            />
+                          </div>
+                        </div>
+
+                        <button 
+                          type="submit" 
+                          className="w-full bg-[#4f46e5] text-white py-2.5 rounded-xl text-xs font-bold transition hover:bg-indigo-700"
+                        >
+                          Внести витрату
+                        </button>
+                      </form>
+                    </div>
+
+                    {/* Повний список останніх витрат */}
+                    <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-3">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Історія витрат ({expenses.length})</span>
+                      {expenses.length > 0 ? (
+                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                          {expenses.slice().sort((a,b) => new Date(b.date || 0) - new Date(a.date || 0)).map(ex => (
+                            <div key={ex.id} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center text-xs">
+                              <div>
+                                <strong className="font-extrabold text-slate-800 block">{ex.description}</strong>
+                                <span className="text-[9px] text-slate-400 font-semibold">{ex.date}</span>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <strong className="text-rose-600 font-bold">-{ex.amount} ₴</strong>
+                                <button 
+                                  onClick={() => handleDeleteExpense(ex.id, ex.description)} 
+                                  className="p-1 text-slate-400 hover:text-rose-600 transition"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-400 text-center py-6 italic font-medium">Витрати ще не вносились.</p>
+                      )}
+                    </div>
+
                   </div>
-                </div>
+                )}
 
               </div>
             )}
@@ -1757,10 +1752,21 @@
                   </div>
 
                   <div>
-                    <label className="text-[9px] text-slate-400 block mb-1">Кімната</label>
+                    <label className="text-[9px] text-slate-400 block mb-1">Кімната / Котедж</label>
                     <select value={formData.roomName} onChange={(e) => setFormData(prev => ({ ...prev, roomName: e.target.value }))} className="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs font-bold text-slate-700">
                       {rooms.map(r => <option key={r} value={r}>{r}</option>)}
                     </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[9px] text-slate-400 block mb-1">Дата заїзду</label>
+                      <input type="date" required value={formData.checkIn} onChange={(e) => setFormData(p => ({ ...p, checkIn: e.target.value }))} className="w-full p-2 bg-slate-50 border rounded-xl text-xs" />
+                    </div>
+                    <div>
+                      <label className="text-[9px] text-slate-400 block mb-1">Дата виїзду</label>
+                      <input type="date" required value={formData.checkOut} onChange={(e) => setFormData(p => ({ ...p, checkOut: e.target.value }))} className="w-full p-2 bg-slate-50 border rounded-xl text-xs" />
+                    </div>
                   </div>
 
                   <textarea placeholder="Примітки..." value={formData.notes} onChange={(e) => setFormData(p => ({ ...p, notes: e.target.value }))} rows="2" className="w-full p-3 bg-slate-50 border rounded-xl text-xs" />
@@ -1771,7 +1777,7 @@
             </div>
           )}
 
-          {/* Кастомне вікно підтвердження (iOS/Android Safe) */}
+          {/* Кастомне вікно підтвердження */}
           {confirmDialog.isOpen && (
             <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[100] flex items-center justify-center p-4">
               <div className="bg-white rounded-2xl p-5 shadow-2xl max-w-xs w-full border border-slate-100 text-center space-y-4">
