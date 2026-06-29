@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="uk">
 <head>
@@ -20,7 +21,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   
   <style>
     body {
@@ -132,7 +133,7 @@
 
   <!-- React-додаток -->
   <script type="text/babel">
-    const { useState, useEffect, useMemo, useRef } = React;
+    const { useState, useEffect, useMemo, useRef, useCallback } = React;
 
     // --- Кастомні іконки SVG ---
     const HomeIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>;
@@ -155,6 +156,14 @@
     const ArrowUpCircleIcon = () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 11l3-3m0 0l3 3m-3-3v8m0 13a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
     const WalletIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>;
 
+    // Стандартні шаблони (як резервна копія та початкові значення)
+    const defaultTemplates = [
+      { id: 'CONFIRM', label: 'ПІДТВЕРДЖЕННЯ', text: 'Садиба Кичера 🌲\nВітаємо, {Гість}! Ваше пряме бронювання {Кімната} на період з {Заїзд} по {Виїзд} підтверджено. Сума: {Ціна} грн. Чекаємо на вас!' },
+      { id: 'REMIND', label: 'НАГАДУВАННЯ', text: 'Садиба Кичера 🌲\nДобрий день, {Гість}! Нагадуємо про заїзд {Заїзд} у {Кімната}. Будемо раді зустрічі!' },
+      { id: 'THANK_YOU', label: 'ПОДЯКА', text: 'Садиба Кичера 🌲\nДякуємо, {Гість}, що обрали нас для відпочинку! Гарної дороги додому.' },
+      { id: 'PREPAYMENT', label: 'ПЕРЕДПЛАТА', text: 'Садиба Кичера 🌲\nШановний {Гість}! Для остаточного підтвердження {Кімната} ({Заїзд} - {Виїзд}), будь ласка, внесіть передплату у розмірі {Передплата} грн.' }
+    ];
+
     function App() {
       const [user, setUser] = useState(null);
       const [userName, setUserName] = useState('');
@@ -164,7 +173,7 @@
       // Стан даних
       const [bookings, setBookings] = useState([]);
       const [rooms, setRooms] = useState(['Котедж #1 (Головний)', 'Котедж #2 (Двоповерховий)', 'Апартаменти VIP']);
-      const [expenses, setExpenses] = useState([]);
+      const [customTemplates, setCustomTemplates] = useState(defaultTemplates);
       
       const [isLoading, setIsLoading] = useState(true);
       const [syncStatus, setSyncStatus] = useState('connecting');
@@ -222,32 +231,19 @@
       // Шаблони повідомлень
       const [selectedDirectGuestId, setSelectedDirectGuestId] = useState('');
       const [selectedTemplateType, setSelectedTemplateType] = useState('CONFIRM');
-      const [customTemplates, setCustomTemplates] = useState([
-        { id: 'CONFIRM', label: 'ПІДТВЕРДЖЕННЯ', text: 'Садиба Кичера 🌲\nВітаємо, {Гість}! Ваше пряме бронювання {Кімната} на період з {Заїзд} по {Виїзд} підтверджено. Сума: {Ціна} грн. Чекаємо на вас!' },
-        { id: 'REMIND', label: 'НАГАДУВАННЯ', text: 'Садиба Кичера 🌲\nДобрий день, {Гість}! Нагадуємо про заїзд {Заїзд} у {Кімната}. Будемо раді зустрічі!' },
-        { id: 'THANK_YOU', label: 'ПОДЯКА', text: 'Садиба Кичера 🌲\nДякуємо, {Гість}, що обрали нас для відпочинку! Гарної дороги додому.' },
-        { id: 'PREPAYMENT', label: 'ПЕРЕДПЛАТА', text: 'Садиба Кичера 🌲\nШановний {Гість}! Для остаточного підтвердження {Кімната} ({Заїзд} - {Виїзд}), будь ласка, внесіть передплату у розмірі {Передплата} грн.' }
-      ]);
 
       const [isEditingTemplates, setIsEditingTemplates] = useState(false);
+      const [editingTemplateId, setEditingTemplateId] = useState(null); // Стан для редагування конкретного шаблону
       const [newTemplateLabel, setNewTemplateLabel] = useState('');
       const [newTemplateText, setNewTemplateText] = useState('');
 
       const [newRoomName, setNewRoomName] = useState('');
       const [searchTerm, setSearchTerm] = useState('');
-      const [chatSearchTerm, setChatSearchTerm] = useState(''); // Новий стан для пошуку у чатах за іменем/датою заїзду
+      const [chatSearchTerm, setChatSearchTerm] = useState(''); 
       const [activeBanner, setActiveBanner] = useState(null);
 
       // Стан підвкладок у вкладці "Ще"
-      const [moreSubTab, setMoreSubTab] = useState('rooms'); // 'rooms', 'finance', 'expenses'
-
-      // Форма витрат
-      const [expenseDesc, setExpenseDesc] = useState('');
-      const [expenseAmount, setExpenseAmount] = useState('');
-      const [expenseDate, setExpenseDate] = useState(() => {
-        const d = new Date();
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      });
+      const [moreSubTab, setMoreSubTab] = useState('rooms'); // 'rooms', 'finance'
 
       // Стан фільтрації для фінансового звіту
       const [reportMonth, setReportMonth] = useState(() => String(new Date().getMonth() + 1).padStart(2, '0'));
@@ -325,8 +321,14 @@
         if (localRooms) setRooms(JSON.parse(localRooms));
         else localStorage.setItem('kychera_fallback_rooms', JSON.stringify(rooms));
 
-        const localExpenses = localStorage.getItem('kychera_fallback_expenses');
-        if (localExpenses) setExpenses(JSON.parse(localExpenses));
+        // Локальні шаблоны
+        const localTemplates = localStorage.getItem('kychera_fallback_templates');
+        if (localTemplates) {
+          setCustomTemplates(JSON.parse(localTemplates));
+        } else {
+          setCustomTemplates(defaultTemplates);
+          localStorage.setItem('kychera_fallback_templates', JSON.stringify(defaultTemplates));
+        }
 
         const savedName = localStorage.getItem('kychera_user_name_global');
         if (savedName) {
@@ -346,7 +348,7 @@
 
         const bookingsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'bookings');
         const roomsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'rooms');
-        const expensesCollection = collection(db, 'artifacts', appId, 'public', 'data', 'expenses');
+        const templatesCollection = collection(db, 'artifacts', appId, 'public', 'data', 'templates');
 
         // Кімнати
         const unsubscribeRooms = onSnapshot(roomsCollection, (snapshot) => {
@@ -370,6 +372,27 @@
         }, (error) => {
           console.warn("Помилка доступу до кімнат у Firestore:", error);
           enableLocalStorageFallback();
+        });
+
+        // Шаблони повідомлень
+        const unsubscribeTemplates = onSnapshot(templatesCollection, (snapshot) => {
+          if (!snapshot.empty) {
+            const loadedTemplates = snapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            setCustomTemplates(loadedTemplates);
+          } else {
+            // Якщо база даних пуста, ініціалізуємо стандартними шаблонами
+            defaultTemplates.forEach(async (t) => {
+              await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'templates', t.id), {
+                label: t.label,
+                text: t.text
+              });
+            });
+          }
+        }, (error) => {
+          console.warn("Помилка доступу до шаблонів у Firestore:", error);
         });
 
         // Бронювання — з real-time сповіщеннями від інших операторів
@@ -404,21 +427,10 @@
           enableLocalStorageFallback();
         });
 
-        // Витрати
-        const unsubscribeExpenses = onSnapshot(expensesCollection, (snapshot) => {
-          const loadedExpenses = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-          setExpenses(loadedExpenses);
-        }, (error) => {
-          console.warn("Помилка доступу до витрат у Firestore:", error);
-        });
-
         return () => {
           unsubscribeRooms();
           unsubscribeBookings();
-          unsubscribeExpenses();
+          unsubscribeTemplates();
         };
       }, [user, isOfflineMode]);
 
@@ -495,74 +507,6 @@
               showNotificationToast(`Номер "${roomToDelete}" видалено!`);
             } catch (e) {
               console.error(e);
-            }
-          }
-        });
-      };
-
-      // --- Робота з витратами ---
-      const handleAddExpense = async (e) => {
-        e.preventDefault();
-        const desc = expenseDesc.trim();
-        const amount = parseFloat(expenseAmount);
-        if (!desc || isNaN(amount) || amount <= 0) return;
-
-        const payload = {
-          description: desc,
-          amount: amount,
-          date: expenseDate || todayStr,
-          createdAt: Date.now(),
-          createdBy: userName || 'Адміністратор'
-        };
-
-        if (isOfflineMode) {
-          payload.id = 'expense_' + Date.now();
-          const updated = [...expenses, payload];
-          setExpenses(updated);
-          localStorage.setItem('kychera_fallback_expenses', JSON.stringify(updated));
-          setExpenseDesc('');
-          setExpenseAmount('');
-          showNotificationToast('Витрату внесено локально!');
-          return;
-        }
-
-        if (!window.firebaseServices) return;
-        const { db, appId, collection, addDoc } = window.firebaseServices;
-        try {
-          const expensesCollection = collection(db, 'artifacts', appId, 'public', 'data', 'expenses');
-          await addDoc(expensesCollection, payload);
-          await logActivity(`Внесено витрату: ${desc} на суму ${amount} ₴`);
-          setExpenseDesc('');
-          setExpenseAmount('');
-          showNotificationToast('Витрату зафіксовано!');
-        } catch (err) {
-          console.error("Помилка додавання витрати: ", err);
-        }
-      };
-
-      const handleDeleteExpense = (id, desc) => {
-        setConfirmDialog({
-          isOpen: true,
-          title: 'Видалити витрату?',
-          message: `Ви дійсно хочете видалити витрату "${desc}"?`,
-          onConfirm: async () => {
-            if (isOfflineMode) {
-              const updated = expenses.filter(ex => ex.id !== id);
-              setExpenses(updated);
-              localStorage.setItem('kychera_fallback_expenses', JSON.stringify(updated));
-              showNotificationToast('Витрату видалено локально!');
-              return;
-            }
-
-            if (!window.firebaseServices) return;
-            const { db, appId, doc, deleteDoc } = window.firebaseServices;
-            try {
-              const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id);
-              await deleteDoc(docRef);
-              await logActivity(`Видалив витрату "${desc}"`);
-              showNotificationToast('Витрату видалено!');
-            } catch (err) {
-              console.error("Помилка видалення витрати: ", err);
             }
           }
         });
@@ -940,9 +884,9 @@
 
       // Динамічний фінансовий звіт (досліджує всю базу бронювань для каси)
       const stats = useMemo(() => {
-        let revenue = 0;      // Загальна каса (вартість усіх підтверджених броней)
-        let prepayment = 0;   // Загальна сума внесених передплат по незавершених платежах
-        let unpaid = 0;       // Скільки ще не доплатили (загальна вартість - передплата, де isFullyPaid === false)
+        let revenue = 0;      
+        let prepayment = 0;   
+        let unpaid = 0;       
 
         bookings.forEach(b => {
           if (b.status !== 'CANCELLED' && b.status !== 'MANUAL_CLOSE') {
@@ -952,7 +896,7 @@
             revenue += bPrice;
             
             if (b.isFullyPaid) {
-              // Якщо оплачено повністю, передплата не вважається невиплаченим залишком
+              // Оплачено повністю
             } else {
               prepayment += bPrepayment;
               unpaid += Math.max(0, bPrice - bPrepayment);
@@ -962,32 +906,66 @@
         return { totalCash: revenue, totalPrepayment: prepayment, outstanding: unpaid };
       }, [bookings]);
 
-      // Генерація фінансового звіту за конкретний обраний місяць
+      // Точний звіт за конкретний обраний місяць (розподіл пропорційно ночам)
       const monthlyReportData = useMemo(() => {
-        const targetYearMonth = `${reportYear}-${reportMonth}`; // Наприклад, '2026-05'
+        const targetYearMonth = `${reportYear}-${reportMonth}`; 
         
-        // Доходи за місяць (на основі дати заїзду)
         const monthBookings = bookings.filter(b => {
           if (b.status === 'CANCELLED' || b.status === 'MANUAL_CLOSE') return false;
-          return b.checkIn && b.checkIn.startsWith(targetYearMonth);
+          if (!b.checkIn || !b.checkOut) return false;
+          
+          let current = new Date(b.checkIn);
+          const end = new Date(b.checkOut);
+          while (current < end) {
+            const y = current.getFullYear();
+            const m = String(current.getMonth() + 1).padStart(2, '0');
+            if (`${y}-${m}` === targetYearMonth) {
+              return true;
+            }
+            current.setDate(current.getDate() + 1);
+          }
+          return false;
         });
 
-        const income = monthBookings.reduce((sum, b) => sum + (parseFloat(b.price) || 0), 0);
-        
-        // Витрати за місяць (на основі дати витрати)
-        const monthExpenses = expenses.filter(ex => ex.date && ex.date.startsWith(targetYearMonth));
-        const expenseTotal = monthExpenses.reduce((sum, ex) => sum + (parseFloat(ex.amount) || 0), 0);
+        let totalProportionalIncome = 0;
+
+        monthBookings.forEach(b => {
+          const bPrice = parseFloat(b.price) || 0;
+          const start = new Date(b.checkIn);
+          const end = new Date(b.checkOut);
+          const totalNights = Math.round((end - start) / (1000 * 60 * 60 * 24));
+
+          if (totalNights <= 0) {
+            const y = start.getFullYear();
+            const m = String(start.getMonth() + 1).padStart(2, '0');
+            if (`${y}-${m}` === targetYearMonth) {
+              totalProportionalIncome += bPrice;
+            }
+            return;
+          }
+
+          const pricePerNight = bPrice / totalNights;
+          let nightsInThisMonth = 0;
+
+          let current = new Date(start);
+          while (current < end) {
+            const y = current.getFullYear();
+            const m = String(current.getMonth() + 1).padStart(2, '0');
+            if (`${y}-${m}` === targetYearMonth) {
+              nightsInThisMonth++;
+            }
+            current.setDate(current.getDate() + 1);
+          }
+
+          totalProportionalIncome += pricePerNight * nightsInThisMonth;
+        });
 
         return {
           bookingsCount: monthBookings.length,
-          income,
-          expenseTotal,
-          profit: income - expenseTotal,
-          expensesList: monthExpenses
+          income: Math.round(totalProportionalIncome)
         };
-      }, [bookings, expenses, reportMonth, reportYear]);
+      }, [bookings, reportMonth, reportYear]);
 
-      // Оновлена логіка: заїзди та виїзди тепер вираховуються на основі довільно обраної дати `homeSelectedDate`
       const todayActivities = useMemo(() => {
         const checkIns = bookings.filter(b => b.checkIn === homeSelectedDate && b.status !== 'CANCELLED' && b.status !== 'MANUAL_CLOSE');
         const checkOuts = bookings.filter(b => b.checkOut === homeSelectedDate && b.status !== 'CANCELLED' && b.status !== 'MANUAL_CLOSE');
@@ -1008,6 +986,127 @@
           (b.checkIn && b.checkIn.includes(searchVal))
         );
       }, [bookings, chatSearchTerm]);
+
+      // --- Генерація форматованого списку для Нотаток від сьогоднішнього дня (ВИКЛЮЧНО РЕАЛЬНІ БРОНІ) ---
+      const getFormattedNotesList = useCallback(() => {
+        const monthsGenitive = [
+          'січня', 'лютого', 'березня', 'квітня', 'травня', 'червня',
+          'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'
+        ];
+        
+        // Тільки ті заїзди, виїзд яких ще не настав і це НЕ є технічним закриттям
+        const fromToday = bookings.filter(b => 
+          b.checkOut >= todayStr && 
+          b.status !== 'CANCELLED' && 
+          b.status !== 'MANUAL_CLOSE' &&
+          b.guestName !== 'Технічне закриття'
+        );
+        
+        return fromToday.map(b => {
+          const start = new Date(b.checkIn);
+          const end = new Date(b.checkOut);
+          
+          const startDay = start.getDate();
+          const startMonth = monthsGenitive[start.getMonth()];
+          
+          const endDay = end.getDate();
+          const endMonth = monthsGenitive[end.getMonth()];
+          const endYear = end.getFullYear();
+          
+          let dateStr = "";
+          if (start.getMonth() === end.getMonth()) {
+            dateStr = `З ${startDay} по ${endDay} ${startMonth} ${endYear}`;
+          } else {
+            dateStr = `З ${startDay} ${startMonth} по ${endDay} ${endMonth} ${endYear}`;
+          }
+          
+          const adults = b.adults || 2;
+          const children = b.children || 0;
+          const phone = b.guestPhone || 'без номера';
+          const name = b.guestName || 'Гість';
+          const room = b.roomName || 'Садиба Кичера';
+          
+          return `- [ ] ${dateStr}, ${room}, ${adults} дорослих і ${children} дітей, ${phone} ${name}`;
+        }).join('\n');
+      }, [bookings, todayStr]);
+
+      // --- Збереження або Оновлення Шаблону повідомлень ---
+      const handleSaveTemplate = async (e) => {
+        e.preventDefault();
+        const label = newTemplateLabel.trim().toUpperCase();
+        const text = newTemplateText.trim();
+        if (!label || !text) return;
+
+        const payload = { label, text };
+
+        if (isOfflineMode) {
+          let updated = [];
+          if (editingTemplateId) {
+            updated = customTemplates.map(t => t.id === editingTemplateId ? { ...t, ...payload } : t);
+          } else {
+            const newId = 'custom_' + Date.now();
+            updated = [...customTemplates, { id: newId, ...payload }];
+          }
+          setCustomTemplates(updated);
+          localStorage.setItem('kychera_fallback_templates', JSON.stringify(updated));
+          setNewTemplateLabel('');
+          setNewTemplateText('');
+          setEditingTemplateId(null);
+          showNotificationToast('Шаблон збережено локально!');
+          return;
+        }
+
+        if (!window.firebaseServices) return;
+        const { db, appId, doc, setDoc } = window.firebaseServices;
+        try {
+          const tId = editingTemplateId || 'custom_' + Date.now();
+          const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'templates', tId);
+          await setDoc(docRef, payload);
+          
+          setNewTemplateLabel('');
+          setNewTemplateText('');
+          setEditingTemplateId(null);
+          showNotificationToast('Шаблон успішно синхронізовано!');
+        } catch (err) {
+          console.error("Помилка збереження шаблону: ", err);
+          showNotificationToast('Помилка збереження шаблону');
+        }
+      };
+
+      // --- Запуск редагування обраного шаблону ---
+      const startEditTemplate = (t) => {
+        setEditingTemplateId(t.id);
+        setNewTemplateLabel(t.label);
+        setNewTemplateText(t.text);
+      };
+
+      // --- Вилучення шаблону ---
+      const handleDeleteTemplate = (tId, tLabel) => {
+        setConfirmDialog({
+          isOpen: true,
+          title: 'Видалити шаблон?',
+          message: `Ви дійсно бажаєте вилучити шаблон "${tLabel}"? Цю дію неможливо скасувати.`,
+          onConfirm: async () => {
+            if (isOfflineMode) {
+              const updated = customTemplates.filter(t => t.id !== tId);
+              setCustomTemplates(updated);
+              localStorage.setItem('kychera_fallback_templates', JSON.stringify(updated));
+              showNotificationToast('Шаблон вилучено локально');
+              return;
+            }
+
+            if (!window.firebaseServices) return;
+            const { db, appId, doc, deleteDoc } = window.firebaseServices;
+            try {
+              const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'templates', tId);
+              await deleteDoc(docRef);
+              showNotificationToast('Шаблон успішно вилучено!');
+            } catch (err) {
+              console.error("Помилка вилучення шаблону: ", err);
+            }
+          }
+        });
+      };
 
       // Auto-dismiss remote change alert
       useEffect(() => {
@@ -1058,22 +1157,6 @@
           document.body.removeChild(el);
           showNotificationToast('Текст скопійовано!');
         }
-      };
-
-      // --- Додавання нового шаблону ---
-      const handleAddNewTemplate = (e) => {
-        e.preventDefault();
-        if (!newTemplateLabel.trim() || !newTemplateText.trim()) return;
-        const newTemplate = {
-          id: 'custom_' + Date.now(),
-          label: newTemplateLabel.trim().toUpperCase(),
-          text: newTemplateText.trim()
-        };
-        setCustomTemplates(prev => [...prev, newTemplate]);
-        setNewTemplateLabel('');
-        setNewTemplateText('');
-        setIsEditingTemplates(false);
-        showNotificationToast('Шаблон збережено!');
       };
 
       // --- Встановлення дати відносно поточної ---
@@ -1140,7 +1223,7 @@
             {activeTab === 'home' && (
               <div className="space-y-4">
                 
-                {/* Новий блок вибору довільної дати */}
+                {/* Блок вибору довільної дати */}
                 <div className="bg-white p-4 rounded-xl border border-slate-150 shadow-sm space-y-3">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Оберіть дату для перегляду</span>
                   
@@ -1256,7 +1339,7 @@
               </div>
             )}
 
-            {/* Вкладка 2: Бронювання (З автоматичним фільтром минулих бронювань) */}
+            {/* Вкладка 2: Бронювання */}
             {activeTab === 'bookings' && (
               <div className="space-y-4">
                 <div className="relative">
@@ -1265,7 +1348,7 @@
                   </span>
                   <input 
                     type="text" 
-                    placeholder="Шукати майбутні броні за ім'ям, тел..."
+                    placeholder="Шукати за ім'ям, тел..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-medium"
@@ -1286,12 +1369,10 @@
                             <div>
                               <span className="bg-indigo-50 text-indigo-800 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider block w-max mb-1">{b.roomName}</span>
                               <h4 className="font-extrabold text-sm text-slate-900">{b.guestName}</h4>
-                              <p className="text-xs text-slate-500 mt-0.5">{b.guestPhone || 'Telephone не вказано'}</p>
+                              <p className="text-xs text-slate-500 mt-0.5">{b.guestPhone || 'Телефон не вказано'}</p>
                             </div>
                             <div className="flex flex-col items-end gap-1">
-                              <span className={`px-2 py-0.5 text-[9px] font-extrabold border rounded-full ${
-                                b.status === 'MANUAL_CLOSE' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-blue-50 text-blue-700 border-blue-200'
-                              }`}>{b.status === 'MANUAL_CLOSE' ? 'Тех. закриття' : 'Пряма бронь'}</span>
+                              <span className="bg-blue-50 text-blue-700 border-blue-200 px-2 py-0.5 text-[9px] font-extrabold border rounded-full">Пряма бронь</span>
 
                               {b.status !== 'MANUAL_CLOSE' && (
                                 b.isFullyPaid ? (
@@ -1513,11 +1594,60 @@
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <form onSubmit={handleAddNewTemplate} className="bg-white p-4 rounded-xl border space-y-3 shadow-sm">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase block">Новий шаблон</span>
-                      <input type="text" required placeholder="НАЗВА (напр: ПРАВИЛА)" value={newTemplateLabel} onChange={(e) => setNewTemplateLabel(e.target.value)} className="w-full px-3 py-2 bg-slate-50 border rounded-lg text-xs" />
-                      <textarea required placeholder="Текст шаблону. Можна використовувати теги: {Гість}, {Кімната}, {Заїзд}, {Виїзд}, {Ціна}, {Передплата}" rows="5" value={newTemplateText} onChange={(e) => setNewTemplateText(e.target.value)} className="w-full p-2.5 bg-slate-50 border rounded-lg text-xs" />
-                      <button type="submit" className="w-full bg-[#4f46e5] text-white py-2.5 rounded-xl text-xs font-bold">Зберегти новий шаблон</button>
+                    {/* Список існуючих шаблонів з можливостю Редагування/Вилучення */}
+                    <div className="bg-white p-4 rounded-xl border border-slate-150 shadow-sm space-y-3">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Існуючі шаблони ({customTemplates.length})</span>
+                      <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                        {customTemplates.map(t => (
+                          <div key={t.id} className="p-3 bg-slate-50 rounded-xl border flex justify-between items-center">
+                            <div>
+                              <strong className="text-xs text-slate-800 block">{t.label}</strong>
+                              <span className="text-[9px] text-slate-400 block truncate max-w-[200px]">{t.text}</span>
+                            </div>
+                            <div className="flex items-center space-x-1.5 shrink-0">
+                              <button onClick={() => startEditTemplate(t)} className="p-1.5 text-indigo-600 bg-white rounded-md border border-slate-200" title="Редагувати"><EditIcon /></button>
+                              <button onClick={() => handleDeleteTemplate(t.id, t.label)} className="p-1.5 text-rose-600 bg-rose-50 rounded-md border border-rose-200" title="Видалити"><TrashIcon /></button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Форма Створення або Зміни шаблону */}
+                    <form onSubmit={handleSaveTemplate} className="bg-white p-4 rounded-xl border space-y-3 shadow-sm border-indigo-100">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase block">
+                          {editingTemplateId ? '✏️ Редагувати шаблон' : '➕ Створити новий шаблон'}
+                        </span>
+                        {editingTemplateId && (
+                          <button 
+                            type="button" 
+                            onClick={() => { setEditingTemplateId(null); setNewTemplateLabel(''); setNewTemplateText(''); }} 
+                            className="text-[10px] text-rose-500 font-bold"
+                          >
+                            Скасувати зміну
+                          </button>
+                        )}
+                      </div>
+                      <input 
+                        type="text" 
+                        required 
+                        placeholder="КОРОТКА НАЗВА (напр: ПІДТВЕРДЖЕННЯ)" 
+                        value={newTemplateLabel} 
+                        onChange={(e) => setNewTemplateLabel(e.target.value)} 
+                        className="w-full px-3 py-2 bg-slate-50 border rounded-lg text-xs font-bold" 
+                      />
+                      <textarea 
+                        required 
+                        placeholder="Текст повідомлення. Можна використовувати теги: {Гість}, {Кімната}, {Заїзд}, {Виїзд}, {Ціна}, {Передплата}" 
+                        rows="5" 
+                        value={newTemplateText} 
+                        onChange={(e) => setNewTemplateText(e.target.value)} 
+                        className="w-full p-2.5 bg-slate-50 border rounded-lg text-xs leading-relaxed" 
+                      />
+                      <button type="submit" className="w-full bg-[#4f46e5] text-white py-2.5 rounded-xl text-xs font-bold shadow-sm transition hover:bg-indigo-700">
+                        {editingTemplateId ? 'Зберегти зміни' : 'Зберегти як новий шаблон'}
+                      </button>
                     </form>
                   </div>
                 )}
@@ -1528,7 +1658,7 @@
             {activeTab === 'more' && (
               <div className="space-y-5">
                 
-                {/* Меню підвкладок вкладки "Ще" */}
+                {/* Меню підвкладок вкладки "Ще" (Тільки Номери та Фінанси) */}
                 <div className="bg-white rounded-xl border border-slate-150 p-1 flex shadow-sm">
                   <button 
                     onClick={() => setMoreSubTab('rooms')} 
@@ -1541,12 +1671,6 @@
                     className={`flex-1 py-2 text-[11px] font-bold rounded-lg text-center transition flex items-center justify-center gap-1 ${moreSubTab === 'finance' ? 'bg-[#4f46e5] text-white' : 'text-slate-500 hover:text-slate-800'}`}
                   >
                     <WalletIcon /> Фінанси
-                  </button>
-                  <button 
-                    onClick={() => setMoreSubTab('expenses')} 
-                    className={`flex-1 py-2 text-[11px] font-bold rounded-lg text-center transition ${moreSubTab === 'expenses' ? 'bg-[#4f46e5] text-white' : 'text-slate-500 hover:text-slate-800'}`}
-                  >
-                    Витрати
                   </button>
                 </div>
 
@@ -1570,7 +1694,7 @@
                   </div>
                 )}
 
-                {/* ПІДВКЛАДКА: ФІНАНСИ */}
+                {/* ПІДВКЛАДКА: ФІНАНСИ (Баланс, Каса, Залишок, Звіт за місяць + Копір для Нотаток) */}
                 {moreSubTab === 'finance' && (
                   <div className="space-y-4">
                     
@@ -1593,16 +1717,16 @@
                       </div>
                     </div>
 
-                    {/* Звіт за місяць */}
+                    {/* Точний пропорційний звіт за місяць */}
                     <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-4">
                       <div className="flex justify-between items-center border-b pb-2">
-                        <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">Звіт за місяць</h3>
+                        <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">Точний звіт за місяць</h3>
                         <div className="flex gap-1.5">
                           {/* Селектор Місяця */}
                           <select 
                             value={reportMonth} 
                             onChange={(e) => setReportMonth(e.target.value)}
-                            className="bg-slate-100 border-0 text-[10px] font-bold rounded-md py-1 px-1.5 text-slate-700 focus:outline-none focus:ring-0"
+                            className="bg-slate-100 border-0 text-[10px] font-bold rounded-md py-1 px-1.5 text-slate-700 focus:outline-none"
                           >
                             {['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => (
                               <option key={m} value={m}>{m}</option>
@@ -1612,7 +1736,7 @@
                           <select 
                             value={reportYear} 
                             onChange={(e) => setReportYear(e.target.value)}
-                            className="bg-slate-100 border-0 text-[10px] font-bold rounded-md py-1 px-1.5 text-slate-700 focus:outline-none focus:ring-0"
+                            className="bg-slate-100 border-0 text-[10px] font-bold rounded-md py-1 px-1.5 text-slate-700 focus:outline-none"
                           >
                             {['2025','2026','2027','2028'].map(y => (
                               <option key={y} value={y}>{y}</option>
@@ -1621,148 +1745,57 @@
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2.5">
-                        <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-100">
-                          <span className="text-[9px] font-bold text-emerald-700 uppercase block">Дохід (Заїзди)</span>
-                          <strong className="text-sm font-black text-emerald-800">+{monthlyReportData.income.toLocaleString()} ₴</strong>
-                          <span className="text-[8px] text-emerald-600 block mt-0.5">Кількість: {monthlyReportData.bookingsCount}</span>
+                      <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 space-y-1">
+                        <span className="text-[10px] font-bold text-emerald-700 uppercase block">Пропорційний дохід за місяць</span>
+                        <div className="flex justify-between items-baseline">
+                          <strong className="text-xl font-black text-emerald-800">+{monthlyReportData.income.toLocaleString()} ₴</strong>
+                          <span className="text-xs text-emerald-600 font-bold">Бронювань: {monthlyReportData.bookingsCount}</span>
                         </div>
-                        <div className="bg-rose-50 p-3 rounded-xl border border-rose-100">
-                          <span className="text-[9px] font-bold text-rose-700 uppercase block">Витрати</span>
-                          <strong className="text-sm font-black text-rose-800">-{monthlyReportData.expenseTotal.toLocaleString()} ₴</strong>
-                          <span className="text-[8px] text-rose-600 block mt-0.5">Записів: {monthlyReportData.expensesList.length}</span>
-                        </div>
+                        <p className="text-[9px] text-emerald-600 leading-relaxed pt-1 border-t border-emerald-200/50">
+                          * Розраховується точно за кількістю ночей, що припадають саме на цей місяць. Наприклад, якщо заїзд 29 червня, а виїзд 5 липня, то в липень зараховується 4 ночі, а в червень — 2 ночі пропорційно до вартості.
+                        </p>
                       </div>
-
-                      <div className="bg-indigo-50/50 p-3.5 rounded-xl border border-indigo-100 flex justify-between items-center">
-                        <div>
-                          <strong className="text-xs text-indigo-900 font-extrabold block">Чистий прибуток</strong>
-                          <span className="text-[9px] text-indigo-500">Доходи мінус витрати за обраний місяць</span>
-                        </div>
-                        <strong className={`text-sm font-black ${monthlyReportData.profit >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
-                          {monthlyReportData.profit.toLocaleString()} ₴
-                        </strong>
-                      </div>
-
-                      {/* Маленький реєстр витрат у звіті */}
-                      {monthlyReportData.expensesList.length > 0 && (
-                        <div className="space-y-1.5 pt-2">
-                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Деталі витрат за місяць:</span>
-                          <div className="max-h-36 overflow-y-auto space-y-1 pr-1 font-medium">
-                            {monthlyReportData.expensesList.map(ex => (
-                              <div key={ex.id} className="text-[10px] bg-slate-50 p-2 rounded-lg border border-slate-100 flex justify-between items-center">
-                                <div>
-                                  <span className="font-extrabold text-slate-800 block">{ex.description}</span>
-                                  <span className="text-[8px] text-slate-400">{ex.date}</span>
-                                </div>
-                                <span className="text-rose-600 font-bold">-{ex.amount} ₴</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </div>
 
-                  </div>
-                )}
-
-                {/* ПІДВКЛАДКА: ВИТРАТИ */}
-                {moreSubTab === 'expenses' && (
-                  <div className="space-y-4">
-                    
-                    {/* Форма додавання витрати */}
+                    {/* Швидкий копір бронювань для Нотаток */}
                     <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-4">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase block tracking-wider">Зафіксувати нову витрату</span>
-                      <form onSubmit={handleAddExpense} className="space-y-3">
-                        
-                        {/* Опис з тегами */}
+                      <div className="flex justify-between items-center border-b pb-2">
                         <div>
-                          <label className="text-[9px] text-slate-400 font-bold block mb-1">Опис витрати / Категорія</label>
-                          <input 
-                            type="text" 
-                            required 
-                            placeholder="Прибирання, комуналка, ремонт..." 
-                            value={expenseDesc} 
-                            onChange={(e) => setExpenseDesc(e.target.value)} 
-                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-bold" 
-                          />
-                          
-                          {/* Швидкі теги */}
-                          <div className="flex flex-wrap gap-1.5 mt-2">
-                            {['Комуналка', 'Прибирання', 'Ремонт', 'Закупівля', 'Зарплата', 'Інтернет', 'Прасування'].map(tag => (
-                              <button
-                                key={tag}
-                                type="button"
-                                onClick={() => setExpenseDesc(tag)}
-                                className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-[#4f46e5] rounded-md text-[9px] font-bold border border-indigo-100/50 transition"
-                              >
-                                + {tag}
-                              </button>
-                            ))}
-                          </div>
+                          <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">Копір для Нотаток</h3>
+                          <p className="text-[9px] text-slate-400 mt-0.5">Всі бронювання від сьогоднішнього дня ({todayStr})</p>
                         </div>
-
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="text-[9px] text-slate-400 font-bold block mb-1">Сума (₴)</label>
-                            <input 
-                              type="number" 
-                              required 
-                              min="0.1" 
-                              step="any" 
-                              placeholder="0" 
-                              value={expenseAmount} 
-                              onChange={(e) => setExpenseAmount(e.target.value)} 
-                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-bold" 
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[9px] text-slate-400 font-bold block mb-1">Дата витрати</label>
-                            <input 
-                              type="date" 
-                              required 
-                              value={expenseDate} 
-                              onChange={(e) => setExpenseDate(e.target.value)} 
-                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none font-medium" 
-                            />
-                          </div>
-                        </div>
-
                         <button 
-                          type="submit" 
-                          className="w-full bg-[#4f46e5] text-white py-2.5 rounded-xl text-xs font-bold transition hover:bg-indigo-700"
+                          onClick={() => {
+                            const listText = getFormattedNotesList();
+                            if (!listText.trim()) {
+                              showNotificationToast("Немає майбутніх бронювань для копіювання");
+                              return;
+                            }
+                            if (navigator.clipboard) {
+                              navigator.clipboard.writeText(listText)
+                                .then(() => showNotificationToast("Скопійовано для нотаток!"))
+                                .catch(() => showNotificationToast("Помилка копіювання"));
+                            } else {
+                              const el = document.createElement('textarea');
+                              el.value = listText;
+                              document.body.appendChild(el);
+                              el.select();
+                              document.execCommand('copy');
+                              document.body.removeChild(el);
+                              showNotificationToast("Скопійовано!");
+                            }
+                          }}
+                          className="bg-indigo-600 text-white font-extrabold text-[10px] px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition hover:bg-indigo-700"
                         >
-                          Внести витрату
+                          <CopyIcon /> Копіювати все
                         </button>
-                      </form>
-                    </div>
+                      </div>
 
-                    {/* Повний список останніх витрат */}
-                    <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-3">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Історія витрат ({expenses.length})</span>
-                      {expenses.length > 0 ? (
-                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                          {expenses.slice().sort((a,b) => new Date(b.date || 0) - new Date(a.date || 0)).map(ex => (
-                            <div key={ex.id} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center text-xs">
-                              <div>
-                                <strong className="font-extrabold text-slate-800 block">{ex.description}</strong>
-                                <span className="text-[9px] text-slate-400 font-semibold">{ex.date}</span>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <strong className="text-rose-600 font-bold">-{ex.amount} ₴</strong>
-                                <button 
-                                  onClick={() => handleDeleteExpense(ex.id, ex.description)} 
-                                  className="p-1 text-slate-400 hover:text-rose-600 transition"
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-slate-400 text-center py-6 italic font-medium">Витрати ще не вносились.</p>
-                      )}
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 max-h-48 overflow-y-auto">
+                        <pre className="text-[10px] text-slate-600 font-mono whitespace-pre-wrap leading-relaxed">
+                          {getFormattedNotesList() || "Майбутніх бронювань немає."}
+                        </pre>
+                      </div>
                     </div>
 
                   </div>
@@ -1890,3 +1923,5 @@
   </script>
 </body>
 </html>
+
+```
