@@ -155,8 +155,10 @@
     const ArrowDownCircleIcon = () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 13l-3 3m0 0l-3-3m3 3V8m0 13a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
     const ArrowUpCircleIcon = () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 11l3-3m0 0l3 3m-3-3v8m0 13a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
     const WalletIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>;
+    const LogOutIcon = () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>;
+    const LockIcon = () => <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>;
 
-    // Стандартні шаблони (як резервна копія та початкові значення)
+    // Стандартні шаблони
     const defaultTemplates = [
       { id: 'CONFIRM', label: 'ПІДТВЕРДЖЕННЯ', text: 'Садиба Кичера 🌲\nВітаємо, {Гість}! Ваше пряме бронювання {Кімната} на період з {Заїзд} по {Виїзд} підтверджено. Сума: {Ціна} грн. Чекаємо на вас!' },
       { id: 'REMIND', label: 'НАГАДУВАННЯ', text: 'Садиба Кичера 🌲\nДобрий день, {Гість}! Нагадуємо про заїзд {Заїзд} у {Кімната}. Будемо раді зустрічі!' },
@@ -166,10 +168,22 @@
 
     function App() {
       const [user, setUser] = useState(null);
-      const [userName, setUserName] = useState('');
-      const [isNamePromptOpen, setIsNamePromptOpen] = useState(false);
-      const [tempName, setTempName] = useState('');
       
+      // Керування ролями та авторизацією
+      const [userRole, setUserRole] = useState(() => localStorage.getItem('kychera_role') || ''); // 'admin' або 'guest'
+      const [userName, setUserName] = useState(() => localStorage.getItem('kychera_user_name_global') || '');
+      const [isNamePromptOpen, setIsNamePromptOpen] = useState(false);
+      
+      // Поля авторизаційної форми
+      const [tempRole, setTempRole] = useState('guest');
+      const [tempName, setTempName] = useState('');
+      const [passwordInput, setPasswordInput] = useState('');
+      const [authError, setAuthError] = useState('');
+
+      // Пароль адміністратора
+      const [adminPassword, setAdminPassword] = useState(() => localStorage.getItem('kychera_admin_password') || 'kichera2026');
+      const [newAdminPasswordInput, setNewAdminPasswordInput] = useState('');
+
       // Стан даних
       const [bookings, setBookings] = useState([]);
       const [rooms, setRooms] = useState(['Котедж #1 (Головний)', 'Котедж #2 (Двоповерховий)', 'Апартаменти VIP']);
@@ -182,7 +196,7 @@
       // Локальний режим як резервний варіант
       const [isOfflineMode, setIsOfflineMode] = useState(false);
 
-      // Real-time сповіщення від інших операторів
+      // Real-time сповіщення
       const [remoteChangeAlert, setRemoteChangeAlert] = useState(null);
       const prevBookingsRef = useRef(null);
       const isFirstLoadRef = useRef(true);
@@ -202,7 +216,7 @@
       const [rangeStart, setRangeStart] = useState(null);
       const [rangeEnd, setRangeEnd] = useState(null);
 
-      // Кастомний діалог підтвердження для обходу обмежень iframe на iOS
+      // Кастомний діалог підтвердження
       const [confirmDialog, setConfirmDialog] = useState({
         isOpen: false,
         title: '',
@@ -233,7 +247,7 @@
       const [selectedTemplateType, setSelectedTemplateType] = useState('CONFIRM');
 
       const [isEditingTemplates, setIsEditingTemplates] = useState(false);
-      const [editingTemplateId, setEditingTemplateId] = useState(null); // Стан для редагування конкретного шаблону
+      const [editingTemplateId, setEditingTemplateId] = useState(null);
       const [newTemplateLabel, setNewTemplateLabel] = useState('');
       const [newTemplateText, setNewTemplateText] = useState('');
 
@@ -243,7 +257,7 @@
       const [activeBanner, setActiveBanner] = useState(null);
 
       // Стан підвкладок у вкладці "Ще"
-      const [moreSubTab, setMoreSubTab] = useState('rooms'); // 'rooms', 'finance'
+      const [moreSubTab, setMoreSubTab] = useState('rooms'); // 'rooms', 'finance', 'settings'
 
       // Стан фільтрації для фінансового звіту
       const [reportMonth, setReportMonth] = useState(() => String(new Date().getMonth() + 1).padStart(2, '0'));
@@ -266,7 +280,14 @@
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       }, []);
 
-      // Ініціалізація та відстеження Auth у Firebase з безпечним резервуванням
+      // Відкрити форму авторизації, якщо дані відсутні у системі
+      useEffect(() => {
+        if (!userRole || !userName) {
+          setIsNamePromptOpen(true);
+        }
+      }, [userRole, userName]);
+
+      // Ініціалізація та відстеження Auth у Firebase
       useEffect(() => {
         const checkFirebaseReady = setInterval(() => {
           if (window.firebaseServices) {
@@ -290,14 +311,6 @@
               setUser(currentUser);
               if (currentUser) myUserIdRef.current = currentUser.uid;
             });
-
-            const savedName = localStorage.getItem('kychera_user_name_global');
-            if (savedName) {
-              setUserName(savedName);
-              setIsNamePromptOpen(false);
-            } else {
-              setIsNamePromptOpen(true);
-            }
 
             return () => unsubscribe();
           }
@@ -328,14 +341,6 @@
         } else {
           setCustomTemplates(defaultTemplates);
           localStorage.setItem('kychera_fallback_templates', JSON.stringify(defaultTemplates));
-        }
-
-        const savedName = localStorage.getItem('kychera_user_name_global');
-        if (savedName) {
-          setUserName(savedName);
-          setIsNamePromptOpen(false);
-        } else {
-          setIsNamePromptOpen(true);
         }
       };
 
@@ -383,7 +388,6 @@
             }));
             setCustomTemplates(loadedTemplates);
           } else {
-            // Якщо база даних пуста, ініціалізуємо стандартними шаблонами
             defaultTemplates.forEach(async (t) => {
               await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'templates', t.id), {
                 label: t.label,
@@ -441,7 +445,7 @@
         try {
           const logsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'activity_logs');
           await addDoc(logsCollection, {
-            operator: userName || 'Адміністратор',
+            operator: userName || 'Користувач',
             userId: user.uid,
             action: actionText,
             timestamp: Date.now()
@@ -451,13 +455,65 @@
         }
       };
 
-      const handleSaveUserName = () => {
-        if (!tempName.trim()) return;
-        const finalName = tempName.trim();
-        setUserName(finalName);
-        localStorage.setItem('kychera_user_name_global', finalName);
-        setIsNamePromptOpen(false);
-        logActivity(`Оператор ${finalName} увійшов в систему Садиби.`);
+      // --- Обробка логіну (З захистом ролей) ---
+      const handleLoginSubmit = () => {
+        setAuthError('');
+        
+        if (tempRole === 'admin') {
+          if (!tempName.trim()) {
+            setAuthError("Введіть ім'я адміністратора");
+            return;
+          }
+          if (passwordInput !== adminPassword) {
+            setAuthError('Невірний пароль адміністратора!');
+            return;
+          }
+          
+          const finalName = tempName.trim();
+          setUserName(finalName);
+          setUserRole('admin');
+          localStorage.setItem('kychera_user_name_global', finalName);
+          localStorage.setItem('kychera_role', 'admin');
+          setIsNamePromptOpen(false);
+          setPasswordInput('');
+          logActivity(`Адміністратор ${finalName} увійшов в систему.`);
+          showNotificationToast("Вхід виконано: Адміністратор");
+        } else {
+          const finalGuestName = "Гість Садиби";
+          setUserName(finalGuestName);
+          setUserRole('guest');
+          localStorage.setItem('kychera_user_name_global', finalGuestName);
+          localStorage.setItem('kychera_role', 'guest');
+          setIsNamePromptOpen(false);
+          setActiveTab('availability'); 
+          showNotificationToast("Вхід виконано: Гість");
+        }
+      };
+
+      const handleChangeAdminPassword = () => {
+        if (!newAdminPasswordInput.trim()) {
+          showNotificationToast("Введіть новий пароль");
+          return;
+        }
+        setAdminPassword(newAdminPasswordInput.trim());
+        localStorage.setItem('kychera_admin_password', newAdminPasswordInput.trim());
+        setNewAdminPasswordInput('');
+        showNotificationToast("Пароль успішно змінено!");
+      };
+
+      const handleLogOut = () => {
+        setConfirmDialog({
+          isOpen: true,
+          title: 'Вийти з системи?',
+          message: 'Ви повернетесь на екран авторизації та вибору ролі.',
+          onConfirm: () => {
+            setUserRole('');
+            setUserName('');
+            localStorage.removeItem('kychera_role');
+            localStorage.removeItem('kychera_user_name_global');
+            setIsNamePromptOpen(true);
+          }
+        });
       };
 
       const handleAddRoom = async () => {
@@ -517,6 +573,10 @@
       };
 
       const handleDateClick = (dateStr, isPast) => {
+        if (userRole === 'guest') {
+          return;
+        }
+
         if (isPast) return; 
 
         if (!rangeStart || (rangeStart && rangeEnd)) {
@@ -583,6 +643,7 @@
       };
 
       const applyActionToRange = async (actionType) => {
+        if (userRole === 'guest') return; 
         if (!rangeStart) return;
         const finalEnd = rangeEnd || rangeStart;
 
@@ -865,7 +926,7 @@
         setIsAddEditModalOpen(true);
       };
 
-      // Фільтрація майбутніх бронювань: автоматично пропадають броні, дати яких вже пройшли (checkOut < todayStr)
+      // Фільтрація майбутніх бронювань
       const activeBookingsOnly = useMemo(() => {
         return bookings.filter(b => b.checkOut >= todayStr);
       }, [bookings, todayStr]);
@@ -882,7 +943,7 @@
         }).sort((a, b) => new Date(a.checkIn) - new Date(b.checkIn));
       }, [activeBookingsOnly, searchTerm]);
 
-      // Динамічний фінансовий звіт (досліджує всю базу бронювань для каси)
+      // Динамічний фінансовий звіт
       const stats = useMemo(() => {
         let revenue = 0;      
         let prepayment = 0;   
@@ -906,7 +967,7 @@
         return { totalCash: revenue, totalPrepayment: prepayment, outstanding: unpaid };
       }, [bookings]);
 
-      // Точний звіт за конкретний обраний місяць (розподіл пропорційно ночам)
+      // Точний звіт за конкретний обраний місяць
       const monthlyReportData = useMemo(() => {
         const targetYearMonth = `${reportYear}-${reportMonth}`; 
         
@@ -976,7 +1037,7 @@
         return currentDate.toLocaleDateString('uk-UA', { month: 'long', year: 'numeric' });
       }, [currentDate]);
 
-      // --- Список гостей для повідомлень з пошуком ---
+      // --- Список гостей для повідомлень ---
       const directGuestsFiltered = useMemo(() => {
         const allDirect = bookings.filter(b => b.status !== 'MANUAL_CLOSE' && b.status !== 'CANCELLED' && b.guestPhone);
         if (!chatSearchTerm.trim()) return allDirect;
@@ -987,22 +1048,41 @@
         );
       }, [bookings, chatSearchTerm]);
 
-      // --- Генерація форматованого списку для Нотаток від сьогоднішнього дня (ВИКЛЮЧНО РЕАЛЬНІ БРОНІ) ---
+      // --- ГЕНЕРАЦІЯ СПИСКУ ДЛЯ НОТАТОК (ПОВНІСТЮ ВИДАЛЕНО iCal ТА ТЕХНІЧНІ ЗАКРИТТЯ) ---
       const getFormattedNotesList = useCallback(() => {
         const monthsGenitive = [
           'січня', 'лютого', 'березня', 'квітня', 'травня', 'червня',
           'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'
         ];
         
-        // Тільки ті заїзди, виїзд яких ще не настав і це НЕ є технічним закриттям
-        const fromToday = bookings.filter(b => 
-          b.checkOut >= todayStr && 
-          b.status !== 'CANCELLED' && 
-          b.status !== 'MANUAL_CLOSE' &&
-          b.guestName !== 'Технічне закриття'
-        );
+        // Відбираємо тільки реальні майбутні бронювання
+        const realFutureGuests = bookings.filter(b => {
+          // 1. Дата виїзду має бути майбутньою
+          if (b.checkOut < todayStr) return false;
+
+          // 2. Виключаємо скасовані замовлення та технічні блокування за статусом
+          if (b.status === 'CANCELLED' || b.status === 'MANUAL_CLOSE') return false;
+
+          const name = (b.guestName || '').toLowerCase().trim();
+
+          // 3. Жорстко фільтруємо будь-які технічні назви або iCal-блоки
+          if (
+            name === 'технічне закриття' ||
+            name === 'зайнято' ||
+            name.includes('closed') ||
+            name.includes('not available') ||
+            name.includes('ical') ||
+            name.includes('block') ||
+            name.includes('синхронізація') ||
+            name.includes('sync')
+          ) {
+            return false;
+          }
+
+          return true;
+        });
         
-        return fromToday.map(b => {
+        return realFutureGuests.map(b => {
           const start = new Date(b.checkIn);
           const end = new Date(b.checkOut);
           
@@ -1073,14 +1153,12 @@
         }
       };
 
-      // --- Запуск редагування обраного шаблону ---
       const startEditTemplate = (t) => {
         setEditingTemplateId(t.id);
         setNewTemplateLabel(t.label);
         setNewTemplateText(t.text);
       };
 
-      // --- Вилучення шаблону ---
       const handleDeleteTemplate = (tId, tLabel) => {
         setConfirmDialog({
           isOpen: true,
@@ -1144,7 +1222,6 @@
         };
       }, [selectedDirectGuestId, previewMessageText, bookings]);
 
-      // --- Копіювання в буфер ---
       const handleCopyToClipboard = () => {
         if (navigator.clipboard) {
           navigator.clipboard.writeText(previewMessageText).then(() => showNotificationToast('Текст скопійовано!')).catch(() => {});
@@ -1159,7 +1236,6 @@
         }
       };
 
-      // --- Встановлення дати відносно поточної ---
       const setDateRelativeToToday = (offset) => {
         const d = new Date();
         d.setDate(d.getDate() + offset);
@@ -1178,7 +1254,7 @@
           )}
 
           {/* Сповіщення від інших операторів */}
-          {remoteChangeAlert && (
+          {remoteChangeAlert && userRole === 'admin' && (
             <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[199] bg-indigo-600 text-white text-xs font-bold px-5 py-3 rounded-2xl shadow-xl toast-animate max-w-[90vw] text-center flex items-center gap-2">
               <span className="w-2 h-2 bg-white rounded-full pulse-dot shrink-0"></span>
               <span>{remoteChangeAlert}</span>
@@ -1192,30 +1268,43 @@
               <div className="bg-[#4f46e5] text-white font-extrabold w-9 h-9 rounded-xl flex items-center justify-center text-sm shadow">КЕ</div>
               <div>
                 <h1 className="text-sm font-black text-slate-900 leading-none font-bold">Садиба Кичера</h1>
-                <span className="text-[10px] text-slate-400 block mt-0.5">Оператор: <strong className="text-[#4f46e5]">{userName || 'Авторизація...'}</strong></span>
+                <span className="text-[10px] text-slate-400 block mt-0.5">
+                  Режим: <strong className={userRole === 'admin' ? "text-[#4f46e5]" : "text-emerald-600"}>{userRole === 'admin' ? `Адмін (${userName})` : 'Гість'}</strong>
+                </span>
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border flex items-center gap-1 ${syncStatus === 'synced' && !isOfflineMode ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${syncStatus === 'synced' && !isOfflineMode ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`}></span>
-                {isOfflineMode ? 'Локальний режим' : syncStatus === 'synced' ? 'Хмара підключена' : 'З\'єднання...'}
+            <div className="flex items-center space-x-1.5">
+              <span className={`text-[9px] font-bold px-2 py-1 rounded-full border flex items-center gap-1 ${syncStatus === 'synced' && !isOfflineMode ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
+                <span className={`w-1 h-1 rounded-full ${syncStatus === 'synced' && !isOfflineMode ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`}></span>
+                {isOfflineMode ? 'Локал' : syncStatus === 'synced' ? 'Хмара' : 'З\'єднання...'}
               </span>
-              <button onClick={() => { setTempName(userName); setIsNamePromptOpen(true); }} className="p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-100"><UserIcon /></button>
+              
+              {/* Кнопка виходу/зміни ролі */}
+              <button 
+                onClick={handleLogOut} 
+                className="p-1.5 bg-rose-50 border border-rose-100 rounded-lg text-rose-600 hover:bg-rose-100 flex items-center gap-1 text-[10px] font-bold"
+                title="Змінити роль / Вийти"
+              >
+                <LogOutIcon />
+                <span className="hidden sm:inline">Вийти</span>
+              </button>
             </div>
           </header>
 
-          {/* Статичний швидкий інфо-бар */}
-          <div className="bg-white border-b border-slate-100 p-4 grid grid-cols-2 gap-3 shadow-sm max-w-md mx-auto w-full">
-            <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100">
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Загальна каса</span>
-              <strong className="text-base font-black text-slate-900">{stats.totalCash.toLocaleString()} ₴</strong>
+          {/* Статичний швидкий інфо-бар — ПРИХОВАНО для Гостей */}
+          {userRole === 'admin' && (
+            <div className="bg-white border-b border-slate-100 p-4 grid grid-cols-2 gap-3 shadow-sm max-w-md mx-auto w-full">
+              <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Загальна каса</span>
+                <strong className="text-base font-black text-slate-900">{stats.totalCash.toLocaleString()} ₴</strong>
+              </div>
+              <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Передплати (утримання)</span>
+                <strong className="text-base font-black text-indigo-700">{stats.totalPrepayment.toLocaleString()} ₴</strong>
+              </div>
             </div>
-            <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100">
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Передплати (утримання)</span>
-              <strong className="text-base font-black text-indigo-700">{stats.totalPrepayment.toLocaleString()} ₴</strong>
-            </div>
-          </div>
+          )}
 
           <main className="flex-1 max-w-md mx-auto w-full px-4 py-4 space-y-6">
 
@@ -1289,17 +1378,25 @@
                           <div key={b.id} className="p-3 bg-emerald-50/40 rounded-xl border border-emerald-100/70 space-y-1">
                             <div className="flex justify-between items-start">
                               <div>
-                                <strong className="text-xs text-slate-900 font-extrabold">{b.guestName}</strong>
-                                <p className="text-[10px] text-slate-500">{b.guestPhone || 'без номера'}</p>
+                                <strong className="text-xs text-slate-900 font-extrabold">
+                                  {userRole === 'admin' ? b.guestName : 'Зайнято (Конфіденційно)'}
+                                </strong>
+                                {userRole === 'admin' && (
+                                  <p className="text-[10px] text-slate-500">{b.guestPhone || 'без номера'}</p>
+                                )}
                               </div>
                               <span className="bg-[#4f46e5] text-white text-[9px] font-bold px-2 py-0.5 rounded">{b.roomName}</span>
                             </div>
-                            <div className="flex justify-between text-[11px] pt-1 text-slate-700">
-                              <span>Залишок до сплати:</span>
-                              <span className={balance === 0 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-black'}>
-                                {balance === 0 ? 'Все сплачено!' : `${balance.toLocaleString()} ₴`}
-                              </span>
-                            </div>
+                            
+                            {/* Показ балансу тільки адміну */}
+                            {userRole === 'admin' && (
+                              <div className="flex justify-between text-[11px] pt-1 text-slate-700">
+                                <span>Залишок до сплати:</span>
+                                <span className={balance === 0 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-black'}>
+                                  {balance === 0 ? 'Все сплачено!' : `${balance.toLocaleString()} ₴`}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         );
                       })
@@ -1323,8 +1420,12 @@
                         <div key={b.id} className="p-3 bg-rose-50/40 rounded-xl border border-rose-100/70 space-y-1">
                           <div className="flex justify-between items-start">
                             <div>
-                              <strong className="text-xs text-slate-900 font-extrabold">{b.guestName}</strong>
-                              <p className="text-[10px] text-slate-500">{b.guestPhone || 'без номера'}</p>
+                              <strong className="text-xs text-slate-900 font-extrabold">
+                                {userRole === 'admin' ? b.guestName : 'Звільнення номеру'}
+                              </strong>
+                              {userRole === 'admin' && (
+                                <p className="text-[10px] text-slate-500">{b.guestPhone || 'без номера'}</p>
+                              )}
                             </div>
                             <span className="bg-slate-700 text-white text-[9px] font-bold px-2 py-0.5 rounded">{b.roomName}</span>
                           </div>
@@ -1339,8 +1440,8 @@
               </div>
             )}
 
-            {/* Вкладка 2: Бронювання */}
-            {activeTab === 'bookings' && (
+            {/* Вкладка 2: Бронювання — ТІЛЬКИ ДЛЯ АДМІНІСТРАТОРА */}
+            {activeTab === 'bookings' && userRole === 'admin' && (
               <div className="space-y-4">
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
@@ -1482,10 +1583,18 @@
                         else if (status === 'DIRECT_BOOKING') dayStyleClasses = 'bg-blue-50/60 border-blue-400 text-blue-900';
                       }
 
-                      if (isSelected && !day.isPast) dayStyleClasses += ' ring-2 ring-[#4f46e5] ring-offset-1 scale-105 z-10';
+                      if (isSelected && !day.isPast && userRole === 'admin') {
+                        dayStyleClasses += ' ring-2 ring-[#4f46e5] ring-offset-1 scale-105 z-10';
+                      }
 
                       return (
-                        <button key={day.dateStr} type="button" disabled={day.isPast} onClick={() => handleDateClick(day.dateStr, day.isPast)} className={`aspect-square flex flex-col items-center justify-center rounded-lg border text-xs font-bold transition relative ${dayStyleClasses}`}>
+                        <button 
+                          key={day.dateStr} 
+                          type="button" 
+                          disabled={day.isPast || userRole === 'guest'} 
+                          onClick={() => handleDateClick(day.dateStr, day.isPast)} 
+                          className={`aspect-square flex flex-col items-center justify-center rounded-lg border text-xs font-bold transition relative ${dayStyleClasses}`}
+                        >
                           <span>{day.dayNum}</span>
                         </button>
                       );
@@ -1494,35 +1603,37 @@
 
                   <div className="mt-5 border-t border-slate-100 pt-4 grid grid-cols-2 gap-2 text-[10px] text-slate-500 font-bold">
                     <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded bg-emerald-50 border border-emerald-100 inline-block"></span><span>Відкрито</span></div>
-                    <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded border border-rose-400 bg-stripes inline-block"></span><span>Закрито вручну</span></div>
-                    <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded bg-blue-50 border border-blue-400 inline-block"></span><span>Пряма бронь (Синє)</span></div>
+                    <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded border border-rose-400 bg-stripes inline-block"></span><span>Технічні закриття</span></div>
+                    <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded bg-blue-50 border border-blue-400 inline-block"></span><span>Зайнято</span></div>
                   </div>
                 </div>
 
-                {/* Дії над періодом */}
-                <div className="bg-white rounded-2xl border border-slate-150 p-4 shadow-sm space-y-4">
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <div>
-                      <span className="text-[10px] font-black uppercase text-indigo-600">Оформлення періоду</span>
-                      <p className="text-xs font-black text-slate-900 mt-0.5">{rangeStart ? `Обрано: з ${rangeStart} ${rangeEnd ? `по ${rangeEnd}` : '(вкажіть виїзд)'}` : 'Оберіть дати на календарі'}</p>
+                {/* Дії над періодом — ПРИХОВАНО для Гостей */}
+                {userRole === 'admin' && (
+                  <div className="bg-white rounded-2xl border border-slate-150 p-4 shadow-sm space-y-4">
+                    <div className="flex justify-between items-center border-b pb-2">
+                      <div>
+                        <span className="text-[10px] font-black uppercase text-indigo-600">Оформлення періоду</span>
+                        <p className="text-xs font-black text-slate-900 mt-0.5">{rangeStart ? `Обрано: з ${rangeStart} ${rangeEnd ? `по ${rangeEnd}` : '(вкажіть виїзд)'}` : 'Оберіть дати на календарі'}</p>
+                      </div>
+                      {rangeStart && <button onClick={() => { setRangeStart(null); setRangeEnd(null); }} className="text-xs text-rose-500 font-bold">Скасувати</button>}
                     </div>
-                    {rangeStart && <button onClick={() => { setRangeStart(null); setRangeEnd(null); }} className="text-xs text-rose-500 font-bold">Скасувати</button>}
-                  </div>
 
-                  <div className="space-y-2.5">
-                    <div className="grid grid-cols-2 gap-2.5">
-                      <button onClick={() => applyActionToRange('FREE')} disabled={!rangeStart} className="bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl text-xs font-black disabled:opacity-40">🟢 ВІДКРИТИ</button>
-                      <button onClick={() => applyActionToRange('MANUAL_CLOSE')} disabled={!rangeStart} className="bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-xl text-xs font-black disabled:opacity-40">🔴 ЗАКРИТИ ВРУЧНУ</button>
+                    <div className="space-y-2.5">
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <button onClick={() => applyActionToRange('FREE')} disabled={!rangeStart} className="bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl text-xs font-black disabled:opacity-40">🟢 ВІДКРИТИ</button>
+                        <button onClick={() => applyActionToRange('MANUAL_CLOSE')} disabled={!rangeStart} className="bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-xl text-xs font-black disabled:opacity-40">🔴 ЗАКРИТИ ВРУЧНУ</button>
+                      </div>
+                      <button onClick={() => applyActionToRange('DIRECT_BOOKING')} disabled={!rangeStart} className="w-full bg-[#4f46e5] hover:bg-indigo-700 text-white py-3 rounded-xl text-xs font-black disabled:opacity-40">👤 СТВОРИТИ ПРЯМЕ БРОНЮВАННЯ</button>
                     </div>
-                    <button onClick={() => applyActionToRange('DIRECT_BOOKING')} disabled={!rangeStart} className="w-full bg-[#4f46e5] hover:bg-indigo-700 text-white py-3 rounded-xl text-xs font-black disabled:opacity-40">👤 СТВОРИТИ ПРЯМЕ БРОНЮВАННЯ</button>
                   </div>
-                </div>
+                )}
 
               </div>
             )}
 
-            {/* Вкладка 4: Повідомлення */}
-            {activeTab === 'messages' && (
+            {/* Вкладка 4: Повідомлення — ТІЛЬКИ ДЛЯ АДМІНІСТРАТОРА */}
+            {activeTab === 'messages' && userRole === 'admin' && (
               <div className="space-y-4">
                 <div className="bg-white rounded-xl border border-slate-100 p-2.5 shadow-sm flex justify-around">
                   <button onClick={() => setIsEditingTemplates(false)} className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${!isEditingTemplates ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500'}`}><SendIcon /> ВІДПРАВИТИ</button>
@@ -1531,12 +1642,9 @@
 
                 {!isEditingTemplates ? (
                   <div className="space-y-4">
-                    
-                    {/* Вибір гостя + ПОШУК */}
                     <div className="bg-white p-4 rounded-xl border border-slate-150 shadow-sm space-y-3">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">1. Знайдіть та оберіть гостя</span>
                       
-                      {/* Рядок пошуку */}
                       <div className="relative">
                         <span className="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400">
                           <SearchIcon />
@@ -1550,7 +1658,6 @@
                         />
                       </div>
 
-                      {/* Селектор */}
                       <select 
                         value={selectedDirectGuestId} 
                         onChange={(e) => setSelectedDirectGuestId(e.target.value)} 
@@ -1594,7 +1701,6 @@
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {/* Список існуючих шаблонів з можливостю Редагування/Вилучення */}
                     <div className="bg-white p-4 rounded-xl border border-slate-150 shadow-sm space-y-3">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Існуючі шаблони ({customTemplates.length})</span>
                       <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
@@ -1613,7 +1719,6 @@
                       </div>
                     </div>
 
-                    {/* Форма Створення або Зміни шаблону */}
                     <form onSubmit={handleSaveTemplate} className="bg-white p-4 rounded-xl border space-y-3 shadow-sm border-indigo-100">
                       <div className="flex justify-between items-center">
                         <span className="text-[10px] font-bold text-slate-400 uppercase block">
@@ -1654,11 +1759,11 @@
               </div>
             )}
 
-            {/* Вкладка 5: Ще */}
-            {activeTab === 'more' && (
+            {/* Вкладка 5: Ще — ТІЛЬКИ ДЛЯ АДМІНІСТРАТОРА */}
+            {activeTab === 'more' && userRole === 'admin' && (
               <div className="space-y-5">
                 
-                {/* Меню підвкладок вкладки "Ще" (Тільки Номери та Фінанси) */}
+                {/* Меню підвкладок вкладки "Ще" */}
                 <div className="bg-white rounded-xl border border-slate-150 p-1 flex shadow-sm">
                   <button 
                     onClick={() => setMoreSubTab('rooms')} 
@@ -1671,6 +1776,12 @@
                     className={`flex-1 py-2 text-[11px] font-bold rounded-lg text-center transition flex items-center justify-center gap-1 ${moreSubTab === 'finance' ? 'bg-[#4f46e5] text-white' : 'text-slate-500 hover:text-slate-800'}`}
                   >
                     <WalletIcon /> Фінанси
+                  </button>
+                  <button 
+                    onClick={() => setMoreSubTab('settings')} 
+                    className={`flex-1 py-2 text-[11px] font-bold rounded-lg text-center transition flex items-center justify-center gap-1 ${moreSubTab === 'settings' ? 'bg-[#4f46e5] text-white' : 'text-slate-500 hover:text-slate-800'}`}
+                  >
+                    Налаштування
                   </button>
                 </div>
 
@@ -1694,11 +1805,10 @@
                   </div>
                 )}
 
-                {/* ПІДВКЛАДКА: ФІНАНСИ (Баланс, Каса, Залишок, Звіт за місяць + Копір для Нотаток) */}
+                {/* ПІДВКЛАДКА: ФІНАНСИ */}
                 {moreSubTab === 'finance' && (
                   <div className="space-y-4">
                     
-                    {/* Базовий фінансовий стан */}
                     <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-4">
                       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Стан каси</h3>
                       <div className="space-y-3">
@@ -1717,12 +1827,10 @@
                       </div>
                     </div>
 
-                    {/* Точний пропорційний звіт за місяць */}
                     <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-4">
                       <div className="flex justify-between items-center border-b pb-2">
                         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">Точний звіт за місяць</h3>
                         <div className="flex gap-1.5">
-                          {/* Селектор Місяця */}
                           <select 
                             value={reportMonth} 
                             onChange={(e) => setReportMonth(e.target.value)}
@@ -1732,7 +1840,6 @@
                               <option key={m} value={m}>{m}</option>
                             ))}
                           </select>
-                          {/* Селектор Року */}
                           <select 
                             value={reportYear} 
                             onChange={(e) => setReportYear(e.target.value)}
@@ -1757,7 +1864,6 @@
                       </div>
                     </div>
 
-                    {/* Швидкий копір бронювань для Нотаток */}
                     <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-4">
                       <div className="flex justify-between items-center border-b pb-2">
                         <div>
@@ -1801,13 +1907,40 @@
                   </div>
                 )}
 
+                {/* ПІДВКЛАДКА: НАЛАШТУВАННЯ */}
+                {moreSubTab === 'settings' && (
+                  <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-4">
+                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">Безпека та пароль адміністратора</h3>
+                    <p className="text-[10px] text-slate-400">Тут ви можете оновити пароль, який використовується для входу в адміністративну панель Садиби Кичера PMS.</p>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-[9px] font-bold text-slate-400 uppercase block mb-1">Новий пароль адміністратора</label>
+                        <input 
+                          type="text" 
+                          placeholder="Введіть новий пароль" 
+                          value={newAdminPasswordInput} 
+                          onChange={(e) => setNewAdminPasswordInput(e.target.value)} 
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none" 
+                        />
+                      </div>
+                      <button 
+                        onClick={handleChangeAdminPassword} 
+                        className="w-full bg-[#4f46e5] text-white py-2.5 rounded-xl text-xs font-bold transition hover:bg-indigo-700"
+                      >
+                        Зберегти новий пароль
+                      </button>
+                    </div>
+                  </div>
+                )}
+
               </div>
             )}
 
           </main>
 
-          {/* Модалка бронювання */}
-          {isAddEditModalOpen && (
+          {/* Модалка бронювання — ТІЛЬКИ ДЛЯ АДМІНІСТРАТОРА */}
+          {isAddEditModalOpen && userRole === 'admin' && (
             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center">
               <div className="bg-white rounded-t-3xl sm:rounded-2xl max-w-sm w-full p-5 space-y-4 max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center border-b pb-2">
@@ -1891,27 +2024,114 @@
             </div>
           )}
 
-          {/* Модалка імені оператора */}
+          {/* Модалка вибору ролі та імені оператора */}
           {isNamePromptOpen && (
             <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
               <div className="bg-white rounded-2xl p-5 shadow-2xl max-w-xs w-full border border-slate-100 space-y-4">
                 <div className="text-center space-y-1">
                   <h3 className="font-black text-sm text-slate-900">Вхід у PMS Садиби</h3>
-                  <p className="text-[11px] text-slate-400">Вкажіть ваше ім'я або посаду для ведення історії операцій.</p>
+                  <p className="text-[11px] text-slate-400">Оберіть вашу роль для початку роботи.</p>
                 </div>
-                <input type="text" placeholder="Приклад: Ірина" value={tempName} onChange={(e) => setTempName(e.target.value)} className="w-full px-3 py-2.5 border rounded-xl text-xs font-bold text-center focus:outline-none" onKeyDown={(e) => e.key === 'Enter' && handleSaveUserName()} />
-                <button onClick={handleSaveUserName} disabled={!tempName.trim()} className="w-full bg-[#4f46e5] text-white py-2.5 rounded-xl text-xs font-bold disabled:opacity-50">Увійти в систему</button>
+                
+                <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
+                  <button 
+                    type="button" 
+                    onClick={() => { setTempRole('guest'); setAuthError(''); }}
+                    className={`py-2 text-xs font-bold rounded-lg text-center transition ${tempRole === 'guest' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                  >
+                    Гість
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => { setTempRole('admin'); setAuthError(''); }}
+                    className={`py-2 text-xs font-bold rounded-lg text-center transition ${tempRole === 'admin' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                  >
+                    Адміністратор
+                  </button>
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  {tempRole === 'admin' ? (
+                    <>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Ім'я оператора</label>
+                        <input 
+                          type="text" 
+                          placeholder="Приклад: Ірина" 
+                          value={tempName} 
+                          onChange={(e) => setTempName(e.target.value)} 
+                          className="w-full px-3 py-2.5 border rounded-xl text-xs font-bold focus:outline-none" 
+                        />
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase">Пароль</label>
+                          <span className="text-[9px] text-[#4f46e5] font-semibold">дефолт: kichera2026</span>
+                        </div>
+                        <div className="relative">
+                          <input 
+                            type="password" 
+                            placeholder="••••••" 
+                            value={passwordInput} 
+                            onChange={(e) => setPasswordInput(e.target.value)} 
+                            className="w-full px-3 py-2 pl-8 border rounded-xl text-xs font-bold focus:outline-none" 
+                            onKeyDown={(e) => e.key === 'Enter' && handleLoginSubmit()}
+                          />
+                          <span className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none">
+                            <LockIcon />
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="p-3 bg-slate-50 border rounded-xl text-[11px] text-slate-500 leading-relaxed text-center">
+                      🟢 <strong>Вхід без пароля.</strong> Ви зможете переглядати календар завантаженості та вільні дати без права редагування.
+                    </div>
+                  )}
+
+                  {authError && (
+                    <p className="text-[11px] text-rose-500 text-center font-bold">{authError}</p>
+                  )}
+                  
+                  <button 
+                    onClick={handleLoginSubmit} 
+                    className="w-full bg-[#4f46e5] text-white py-2.5 rounded-xl text-xs font-bold mt-2"
+                  >
+                    {tempRole === 'admin' ? 'Увійти як Адміністратор' : 'Увійти як Гість'}
+                  </button>
+                </div>
               </div>
             </div>
           )}
 
           {/* Нижня панель навігації */}
           <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2.5 px-3 flex justify-around items-center z-40 shadow-[0_-2px_10px_rgba(0,0,0,0.03)]">
-            <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1 text-[9px] font-black ${activeTab === 'home' ? 'text-[#4f46e5]' : 'text-slate-400'}`}><HomeIcon /><span>Головна</span></button>
-            <button onClick={() => setActiveTab('bookings')} className={`flex flex-col items-center gap-1 text-[9px] font-black ${activeTab === 'bookings' ? 'text-[#4f46e5]' : 'text-slate-400'}`}><ClockIcon /><span>Бронювання</span></button>
-            <button onClick={() => setActiveTab('availability')} className={`flex flex-col items-center gap-1 text-[9px] font-black ${activeTab === 'availability' ? 'text-[#4f46e5]' : 'text-slate-400'}`}><CalendarIcon /><span>Календар</span></button>
-            <button onClick={() => setActiveTab('messages')} className={`flex flex-col items-center gap-1 text-[9px] font-black ${activeTab === 'messages' ? 'text-[#4f46e5]' : 'text-slate-400'}`}><MessageSquareIcon /><span>Чати</span></button>
-            <button onClick={() => setActiveTab('more')} className={`flex flex-col items-center gap-1 text-[9px] font-black ${activeTab === 'more' ? 'text-[#4f46e5]' : 'text-slate-400'}`}><SlidersIcon /><span>Ще</span></button>
+            <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1 text-[9px] font-black ${activeTab === 'home' ? 'text-[#4f46e5]' : 'text-slate-400'}`}>
+              <HomeIcon />
+              <span>Головна</span>
+            </button>
+            
+            <button onClick={() => setActiveTab('availability')} className={`flex flex-col items-center gap-1 text-[9px] font-black ${activeTab === 'availability' ? 'text-[#4f46e5]' : 'text-slate-400'}`}>
+              <CalendarIcon />
+              <span>Календар</span>
+            </button>
+            
+            {userRole === 'admin' && (
+              <>
+                <button onClick={() => setActiveTab('bookings')} className={`flex flex-col items-center gap-1 text-[9px] font-black ${activeTab === 'bookings' ? 'text-[#4f46e5]' : 'text-slate-400'}`}>
+                  <ClockIcon />
+                  <span>Бронювання</span>
+                </button>
+                <button onClick={() => setActiveTab('messages')} className={`flex flex-col items-center gap-1 text-[9px] font-black ${activeTab === 'messages' ? 'text-[#4f46e5]' : 'text-slate-400'}`}>
+                  <MessageSquareIcon />
+                  <span>Чати</span>
+                </button>
+                <button onClick={() => setActiveTab('more')} className={`flex flex-col items-center gap-1 text-[9px] font-black ${activeTab === 'more' ? 'text-[#4f46e5]' : 'text-slate-400'}`}>
+                  <SlidersIcon />
+                  <span>Ще</span>
+                </button>
+              </>
+            )}
           </nav>
 
         </div>
