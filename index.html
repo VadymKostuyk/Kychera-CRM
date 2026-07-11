@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="uk">
 <head>
@@ -157,6 +156,7 @@
     const WalletIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>;
     const LogOutIcon = () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>;
     const LockIcon = () => <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>;
+    const PhoneIcon = () => <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>;
 
     // Стандартні шаблони
     const defaultTemplates = [
@@ -166,15 +166,22 @@
       { id: 'PREPAYMENT', label: 'ПЕРЕДПЛАТА', text: 'Садиба Кичера 🌲\nШановний {Гість}! Для остаточного підтвердження {Кімната} ({Заїзд} - {Виїзд}), будь ласка, внесіть передплату у розмірі {Передплата} грн.' }
     ];
 
+    const getNextDay = (dateStr) => {
+      if (!dateStr) return '';
+      const d = new Date(dateStr + 'T00:00:00');
+      d.setDate(d.getDate() + 1);
+      return d.toISOString().split('T')[0];
+    };
+
     function App() {
       const [user, setUser] = useState(null);
       
-      // Керування ролями та авторизацією
+      // Ролі та авторизація
       const [userRole, setUserRole] = useState(() => localStorage.getItem('kychera_role') || ''); // 'admin' або 'guest'
       const [userName, setUserName] = useState(() => localStorage.getItem('kychera_user_name_global') || '');
       const [isNamePromptOpen, setIsNamePromptOpen] = useState(false);
       
-      // Поля авторизаційної форми
+      // Авторизаційна форма
       const [tempRole, setTempRole] = useState('guest');
       const [tempName, setTempName] = useState('');
       const [passwordInput, setPasswordInput] = useState('');
@@ -193,7 +200,7 @@
       const [syncStatus, setSyncStatus] = useState('connecting');
       const [isSaving, setIsSaving] = useState(false);
 
-      // Локальний режим як резервний варіант
+      // Локальний режим
       const [isOfflineMode, setIsOfflineMode] = useState(false);
 
       // Real-time сповіщення
@@ -224,7 +231,7 @@
         onConfirm: null
       });
 
-      // Стан форми створення / редагування
+      // Форма створення / редагування
       const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false);
       const [editingBooking, setEditingBooking] = useState(null);
       const [formData, setFormData] = useState({
@@ -256,6 +263,10 @@
       const [chatSearchTerm, setChatSearchTerm] = useState(''); 
       const [activeBanner, setActiveBanner] = useState(null);
 
+      // Нові розширені фільтри для вкладки Бронювання
+      const [filterRoom, setFilterRoom] = useState('ALL');
+      const [filterPayment, setFilterPayment] = useState('ALL'); // 'ALL', 'PAID', 'UNPAID'
+
       // Стан підвкладок у вкладці "Ще"
       const [moreSubTab, setMoreSubTab] = useState('rooms'); // 'rooms', 'finance', 'settings'
 
@@ -269,7 +280,6 @@
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       });
 
-      // --- Функція сповіщень (toast) ---
       const showNotificationToast = (message) => {
         setActiveBanner(message);
         setTimeout(() => setActiveBanner(null), 3000);
@@ -280,14 +290,12 @@
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       }, []);
 
-      // Відкрити форму авторизації, якщо дані відсутні у системі
       useEffect(() => {
         if (!userRole || !userName) {
           setIsNamePromptOpen(true);
         }
       }, [userRole, userName]);
 
-      // Ініціалізація та відстеження Auth у Firebase
       useEffect(() => {
         const checkFirebaseReady = setInterval(() => {
           if (window.firebaseServices) {
@@ -319,14 +327,12 @@
         return () => clearInterval(checkFirebaseReady);
       }, []);
 
-      // Увімкнення локального офлайн-режиму збереження
       const enableLocalStorageFallback = () => {
         console.warn("Ввімкнено автономний режим PMS (Local Storage)");
         setIsOfflineMode(true);
         setSyncStatus('synced');
         setIsLoading(false);
         
-        // Завантаження локальних даних
         const localBookings = localStorage.getItem('kychera_fallback_bookings');
         if (localBookings) setBookings(JSON.parse(localBookings));
         
@@ -334,7 +340,6 @@
         if (localRooms) setRooms(JSON.parse(localRooms));
         else localStorage.setItem('kychera_fallback_rooms', JSON.stringify(rooms));
 
-        // Локальні шаблоны
         const localTemplates = localStorage.getItem('kychera_fallback_templates');
         if (localTemplates) {
           setCustomTemplates(JSON.parse(localTemplates));
@@ -344,7 +349,6 @@
         }
       };
 
-      // Підключення до бази даних реального часу (Firestore)
       useEffect(() => {
         if (!user || isOfflineMode || !window.firebaseServices) return;
 
@@ -355,7 +359,6 @@
         const roomsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'rooms');
         const templatesCollection = collection(db, 'artifacts', appId, 'public', 'data', 'templates');
 
-        // Кімнати
         const unsubscribeRooms = onSnapshot(roomsCollection, (snapshot) => {
           if (!snapshot.empty) {
             const loadedRooms = snapshot.docs.map(doc => doc.data().name);
@@ -379,7 +382,6 @@
           enableLocalStorageFallback();
         });
 
-        // Шаблони повідомлень
         const unsubscribeTemplates = onSnapshot(templatesCollection, (snapshot) => {
           if (!snapshot.empty) {
             const loadedTemplates = snapshot.docs.map(doc => ({
@@ -399,7 +401,6 @@
           console.warn("Помилка доступу до шаблонів у Firestore:", error);
         });
 
-        // Бронювання — з real-time сповіщеннями від інших операторів
         const unsubscribeBookings = onSnapshot(bookingsCollection, (snapshot) => {
           const loadedBookings = snapshot.docs.map(doc => ({
             id: doc.id,
@@ -455,7 +456,6 @@
         }
       };
 
-      // --- Обробка логіну (З захистом ролей) ---
       const handleLoginSubmit = () => {
         setAuthError('');
         
@@ -642,27 +642,71 @@
         return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} р.`;
       };
 
+      // Розрахунок відсотка завантаженості котеджу на обраний місяць
+      const currentMonthOccupancy = useMemo(() => {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const totalDays = new Date(year, month + 1, 0).getDate();
+        
+        let occupiedCount = 0;
+        for (let d = 1; d <= totalDays; d++) {
+          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          if (getDayStatusForRoom(dateStr) !== 'FREE') {
+            occupiedCount++;
+          }
+        }
+        return Math.round((occupiedCount / totalDays) * 100);
+      }, [currentDate, bookings, selectedRoom]);
+
+      // --- КОРЕКТНЕ НАЛАШТУВАННЯ ТА ВИДАЛЕННЯ ТЕХНІЧНОГО ЗАКРИТТЯ ДАТ ---
       const applyActionToRange = async (actionType) => {
         if (userRole === 'guest') return; 
         if (!rangeStart) return;
-        const finalEnd = rangeEnd || rangeStart;
 
-        if (isOfflineMode) {
-          if (actionType === 'FREE') {
+        let cIn = rangeStart;
+        let cOut = rangeEnd;
+
+        if (!cOut || cIn === cOut) {
+          cOut = getNextDay(cIn);
+        }
+
+        if (actionType === 'FREE') {
+          if (isOfflineMode) {
             const updated = bookings.filter(b => 
               !(b.roomName === selectedRoom && 
-              ((b.checkIn >= rangeStart && b.checkIn <= finalEnd) || (b.checkOut >= rangeStart && b.checkOut <= finalEnd)))
+                b.status === 'MANUAL_CLOSE' &&
+                b.checkIn < cOut && cIn < b.checkOut)
             );
             setBookings(updated);
             localStorage.setItem('kychera_fallback_bookings', JSON.stringify(updated));
-            showNotificationToast(`Період відкрито як вільний`);
-          } else if (actionType === 'MANUAL_CLOSE') {
+            showNotificationToast(`Період успішно відкрито (без змін бронювань)`);
+          } else {
+            if (!window.firebaseServices) return;
+            const { db, appId, doc, deleteDoc } = window.firebaseServices;
+            
+            const technicalClosuresToDelete = bookings.filter(b => 
+              b.roomName === selectedRoom && 
+              b.status === 'MANUAL_CLOSE' &&
+              b.checkIn < cOut && cIn < b.checkOut
+            );
+
+            for (const b of technicalClosuresToDelete) {
+              await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'bookings', b.id));
+            }
+            await logActivity(`Відкрив технічне закриття для ${selectedRoom} у проміжку ${cIn} — ${cOut}`);
+            showNotificationToast(`Технічне закриття успішно знято`);
+          }
+          setRangeStart(null);
+          setRangeEnd(null);
+        } 
+        else if (actionType === 'MANUAL_CLOSE') {
+          if (isOfflineMode) {
             const updated = [...bookings, {
               id: 'manual_' + Date.now(),
               guestName: 'Технічне закриття',
               roomName: selectedRoom,
-              checkIn: rangeStart,
-              checkOut: finalEnd,
+              checkIn: cIn,
+              checkOut: cOut,
               price: 0,
               prepayment: 0,
               status: 'MANUAL_CLOSE',
@@ -672,63 +716,26 @@
             }];
             setBookings(updated);
             localStorage.setItem('kychera_fallback_bookings', JSON.stringify(updated));
-            showNotificationToast(`Закрито вручну (Червоне)`);
-          } else if (actionType === 'DIRECT_BOOKING') {
-            setFormData({
-              guestName: '',
-              guestPhone: '',
+            showNotificationToast(`Дату(и) технічно закрито`);
+          } else {
+            if (!window.firebaseServices) return;
+            const { db, appId, collection, addDoc } = window.firebaseServices;
+            const bookingsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'bookings');
+            await addDoc(bookingsCollection, {
+              guestName: 'Технічне закриття',
               roomName: selectedRoom,
-              checkIn: rangeStart,
-              checkOut: finalEnd,
-              price: '',
-              prepayment: '', 
-              status: 'CONFIRMED',
-              isFullyPaid: false,
-              notes: '',
-              adults: 2,
-              children: 0
+              checkIn: cIn,
+              checkOut: cOut,
+              price: 0,
+              prepayment: 0,
+              status: 'MANUAL_CLOSE',
+              isFullyPaid: true,
+              createdBy: userName || 'Адміністратор',
+              createdAt: Date.now()
             });
-            setEditingBooking(null);
-            setIsAddEditModalOpen(true);
+            await logActivity(`Закрив вручну період ${cIn} — ${cOut} для ${selectedRoom}`);
+            showNotificationToast(`Період закрито для технічних робіт`);
           }
-          setRangeStart(null);
-          setRangeEnd(null);
-          return;
-        }
-
-        if (!window.firebaseServices) return;
-        const { db, appId, collection, addDoc, deleteDoc, doc } = window.firebaseServices;
-
-        if (actionType === 'FREE') {
-          const bookingsToDelete = bookings.filter(b => 
-            b.roomName === selectedRoom && 
-            ((b.checkIn >= rangeStart && b.checkIn <= finalEnd) || (b.checkOut >= rangeStart && b.checkOut <= finalEnd))
-          );
-
-          for (const b of bookingsToDelete) {
-            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'bookings', b.id));
-          }
-          await logActivity(`Звільнив період ${rangeStart} — ${finalEnd} для ${selectedRoom}`);
-          showNotificationToast(`Період відкрито як вільний`);
-          setRangeStart(null);
-          setRangeEnd(null);
-        } 
-        else if (actionType === 'MANUAL_CLOSE') {
-          const bookingsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'bookings');
-          await addDoc(bookingsCollection, {
-            guestName: 'Технічне закриття',
-            roomName: selectedRoom,
-            checkIn: rangeStart,
-            checkOut: finalEnd,
-            price: 0,
-            prepayment: 0,
-            status: 'MANUAL_CLOSE',
-            isFullyPaid: true,
-            createdBy: userName || 'Адміністратор',
-            createdAt: Date.now()
-          });
-          await logActivity(`Закрив вручну період ${rangeStart} — ${finalEnd} для ${selectedRoom}`);
-          showNotificationToast(`Закрито вручну`);
           setRangeStart(null);
           setRangeEnd(null);
         } 
@@ -737,8 +744,8 @@
             guestName: '',
             guestPhone: '',
             roomName: selectedRoom,
-            checkIn: rangeStart,
-            checkOut: finalEnd,
+            checkIn: cIn,
+            checkOut: cOut,
             price: '',
             prepayment: '', 
             status: 'CONFIRMED',
@@ -889,6 +896,78 @@
         });
       };
 
+      // --- ІМПОРТ ТА ЕКСПОРТ (РЕЗЕРВНЕ КОПІЮВАННЯ) ---
+      const handleExportData = () => {
+        try {
+          const backupData = {
+            bookings,
+            rooms,
+            customTemplates,
+            exportDate: new Date().toISOString(),
+            operator: userName
+          };
+          const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+          const downloadAnchor = document.createElement('a');
+          downloadAnchor.setAttribute("href", dataStr);
+          downloadAnchor.setAttribute("download", `kychera_backup_${new Date().toISOString().split('T')[0]}.json`);
+          document.body.appendChild(downloadAnchor);
+          downloadAnchor.click();
+          downloadAnchor.remove();
+          showNotificationToast("Резервну копію збережено!");
+        } catch (e) {
+          showNotificationToast("Помилка створення файлу резервної копії");
+        }
+      };
+
+      const handleImportData = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            const imported = JSON.parse(e.target.result);
+            if (!imported.bookings || !Array.isArray(imported.bookings)) {
+              showNotificationToast("Файл некоректний або пошкоджений!");
+              return;
+            }
+
+            setConfirmDialog({
+              isOpen: true,
+              title: "Відновити дані з файлу?",
+              message: `Буде відновлено ${imported.bookings.length} замовлень. Поточні дані у системі будуть перезаписані!`,
+              onConfirm: async () => {
+                if (isOfflineMode) {
+                  setBookings(imported.bookings);
+                  if (imported.rooms) setRooms(imported.rooms);
+                  if (imported.customTemplates) setCustomTemplates(imported.customTemplates);
+                  
+                  localStorage.setItem('kychera_fallback_bookings', JSON.stringify(imported.bookings));
+                  if (imported.rooms) localStorage.setItem('kychera_fallback_rooms', JSON.stringify(imported.rooms));
+                  if (imported.customTemplates) localStorage.setItem('kychera_fallback_templates', JSON.stringify(imported.customTemplates));
+                  
+                  showNotificationToast("Дані успішно імпортовано локально!");
+                } else {
+                  if (!window.firebaseServices) return;
+                  const { db, appId, doc, setDoc } = window.firebaseServices;
+                  
+                  // Синхронізуємо кожне замовлення у Firestore
+                  for (const b of imported.bookings) {
+                    const bId = b.id || 'booking_' + Date.now() + Math.random().toString(36).substr(2, 5);
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'bookings', bId), b);
+                  }
+                  
+                  showNotificationToast("Дані відновлено та синхронізовано з хмарою!");
+                }
+              }
+            });
+          } catch (err) {
+            showNotificationToast("Помилка читання файлу резервної копії.");
+          }
+        };
+        reader.readAsText(file);
+      };
+
       const resetForm = () => {
         setFormData({
           guestName: '',
@@ -931,17 +1010,32 @@
         return bookings.filter(b => b.checkOut >= todayStr);
       }, [bookings, todayStr]);
 
+      // Розширена фільтрація списку бронювань (додано фільтри за кімнатою та оплатою)
       const filteredBookings = useMemo(() => {
         return activeBookingsOnly.filter(b => {
+          // Текстовий пошук
           const term = searchTerm.toLowerCase();
-          return (
+          const matchesSearch = (
             b.guestName?.toLowerCase().includes(term) ||
             (b.guestPhone && b.guestPhone.includes(term)) ||
             (b.checkIn && b.checkIn.includes(term)) ||
             b.roomName?.toLowerCase().includes(term)
           );
+
+          // Фільтр за номером кімнати
+          const matchesRoom = filterRoom === 'ALL' || b.roomName === filterRoom;
+
+          // Фільтр за статусом оплати
+          let matchesPayment = true;
+          if (filterPayment === 'PAID') {
+            matchesPayment = b.isFullyPaid === true;
+          } else if (filterPayment === 'UNPAID') {
+            matchesPayment = b.isFullyPaid !== true && b.status !== 'MANUAL_CLOSE';
+          }
+
+          return matchesSearch && matchesRoom && matchesPayment;
         }).sort((a, b) => new Date(a.checkIn) - new Date(b.checkIn));
-      }, [activeBookingsOnly, searchTerm]);
+      }, [activeBookingsOnly, searchTerm, filterRoom, filterPayment]);
 
       // Динамічний фінансовий звіт
       const stats = useMemo(() => {
@@ -1037,7 +1131,6 @@
         return currentDate.toLocaleDateString('uk-UA', { month: 'long', year: 'numeric' });
       }, [currentDate]);
 
-      // --- Список гостей для повідомлень ---
       const directGuestsFiltered = useMemo(() => {
         const allDirect = bookings.filter(b => b.status !== 'MANUAL_CLOSE' && b.status !== 'CANCELLED' && b.guestPhone);
         if (!chatSearchTerm.trim()) return allDirect;
@@ -1048,24 +1141,18 @@
         );
       }, [bookings, chatSearchTerm]);
 
-      // --- ГЕНЕРАЦІЯ СПИСКУ ДЛЯ НОТАТОК (ПОВНІСТЮ ВИДАЛЕНО iCal ТА ТЕХНІЧНІ ЗАКРИТТЯ) ---
       const getFormattedNotesList = useCallback(() => {
         const monthsGenitive = [
           'січня', 'лютого', 'березня', 'квітня', 'травня', 'червня',
           'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'
         ];
         
-        // Відбираємо тільки реальні майбутні бронювання
         const realFutureGuests = bookings.filter(b => {
-          // 1. Дата виїзду має бути майбутньою
           if (b.checkOut < todayStr) return false;
-
-          // 2. Виключаємо скасовані замовлення та технічні блокування за статусом
           if (b.status === 'CANCELLED' || b.status === 'MANUAL_CLOSE') return false;
 
           const name = (b.guestName || '').toLowerCase().trim();
 
-          // 3. Жорстко фільтруємо будь-які технічні назви або iCal-блоки
           if (
             name === 'технічне закриття' ||
             name === 'зайнято' ||
@@ -1110,7 +1197,6 @@
         }).join('\n');
       }, [bookings, todayStr]);
 
-      // --- Збереження або Оновлення Шаблону повідомлень ---
       const handleSaveTemplate = async (e) => {
         e.preventDefault();
         const label = newTemplateLabel.trim().toUpperCase();
@@ -1186,14 +1272,12 @@
         });
       };
 
-      // Auto-dismiss remote change alert
       useEffect(() => {
         if (!remoteChangeAlert) return;
-        const t = setTimeout(() => setRemoteChangeAlert(null), 5000);
-        return () => clearTimeout(t);
+        const textTimeout = setTimeout(() => setRemoteChangeAlert(null), 5000);
+        return () => clearTimeout(textTimeout);
       }, [remoteChangeAlert]);
 
-      // --- Попередній перегляд тексту повідомлення ---
       const previewMessageText = useMemo(() => {
         const guest = bookings.find(g => g.id === selectedDirectGuestId);
         const template = customTemplates.find(t => t.id === selectedTemplateType);
@@ -1209,7 +1293,6 @@
           .replace(/{Передплата}/g, (guest.prepayment || 0).toLocaleString());
       }, [selectedDirectGuestId, selectedTemplateType, customTemplates, bookings]);
 
-      // --- Посилання для месенджерів ---
       const messengerUrls = useMemo(() => {
         const guest = bookings.find(g => g.id === selectedDirectGuestId);
         const phone = guest?.guestPhone?.replace(/\D/g, '') || '';
@@ -1280,7 +1363,6 @@
                 {isOfflineMode ? 'Локал' : syncStatus === 'synced' ? 'Хмара' : 'З\'єднання...'}
               </span>
               
-              {/* Кнопка виходу/зміни ролі */}
               <button 
                 onClick={handleLogOut} 
                 className="p-1.5 bg-rose-50 border border-rose-100 rounded-lg text-rose-600 hover:bg-rose-100 flex items-center gap-1 text-[10px] font-bold"
@@ -1378,23 +1460,36 @@
                           <div key={b.id} className="p-3 bg-emerald-50/40 rounded-xl border border-emerald-100/70 space-y-1">
                             <div className="flex justify-between items-start">
                               <div>
-                                <strong className="text-xs text-slate-900 font-extrabold">
-                                  {userRole === 'admin' ? b.guestName : 'Зайнято (Конфіденційно)'}
-                                </strong>
+                                <div className="flex items-center gap-2">
+                                  <strong className="text-xs text-slate-900 font-extrabold">
+                                    {userRole === 'admin' ? b.guestName : 'Зайнято (Конфіденційно)'}
+                                  </strong>
+                                  {userRole === 'admin' && b.guestPhone && (
+                                    <a href={`tel:${b.guestPhone}`} className="p-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-full transition" title="Зателефонувати гостю">
+                                      <PhoneIcon />
+                                    </a>
+                                  )}
+                                </div>
                                 {userRole === 'admin' && (
-                                  <p className="text-[10px] text-slate-500">{b.guestPhone || 'без номера'}</p>
+                                  <p className="text-[10px] text-slate-500 mt-0.5">{b.guestPhone || 'без номера'}</p>
                                 )}
                               </div>
                               <span className="bg-[#4f46e5] text-white text-[9px] font-bold px-2 py-0.5 rounded">{b.roomName}</span>
                             </div>
                             
-                            {/* Показ балансу тільки адміну */}
                             {userRole === 'admin' && (
-                              <div className="flex justify-between text-[11px] pt-1 text-slate-700">
+                              <div className="flex justify-between text-[11px] pt-1 text-slate-700 border-b border-emerald-100/30 pb-1">
                                 <span>Залишок до сплати:</span>
                                 <span className={balance === 0 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-black'}>
                                   {balance === 0 ? 'Все сплачено!' : `${balance.toLocaleString()} ₴`}
                                 </span>
+                              </div>
+                            )}
+
+                            {/* Відображення Приміток */}
+                            {userRole === 'admin' && b.notes && (
+                              <div className="mt-2 text-[10px] text-slate-600 bg-white/80 p-2 rounded-lg border border-emerald-100/60 shadow-sm leading-relaxed">
+                                <strong className="text-emerald-800 font-bold">Примітка:</strong> {b.notes}
                               </div>
                             )}
                           </div>
@@ -1420,15 +1515,29 @@
                         <div key={b.id} className="p-3 bg-rose-50/40 rounded-xl border border-rose-100/70 space-y-1">
                           <div className="flex justify-between items-start">
                             <div>
-                              <strong className="text-xs text-slate-900 font-extrabold">
-                                {userRole === 'admin' ? b.guestName : 'Звільнення номеру'}
-                              </strong>
+                              <div className="flex items-center gap-2">
+                                <strong className="text-xs text-slate-900 font-extrabold">
+                                  {userRole === 'admin' ? b.guestName : 'Звільнення номеру'}
+                                </strong>
+                                {userRole === 'admin' && b.guestPhone && (
+                                  <a href={`tel:${b.guestPhone}`} className="p-1 bg-rose-100 hover:bg-rose-200 text-rose-800 rounded-full transition" title="Зателефонувати гостю">
+                                    <PhoneIcon />
+                                  </a>
+                                )}
+                              </div>
                               {userRole === 'admin' && (
-                                <p className="text-[10px] text-slate-500">{b.guestPhone || 'без номера'}</p>
+                                <p className="text-[10px] text-slate-500 mt-0.5">{b.guestPhone || 'без номера'}</p>
                               )}
                             </div>
                             <span className="bg-slate-700 text-white text-[9px] font-bold px-2 py-0.5 rounded">{b.roomName}</span>
                           </div>
+
+                          {/* Відображення Приміток */}
+                          {userRole === 'admin' && b.notes && (
+                            <div className="mt-2 text-[10px] text-slate-600 bg-white/80 p-2 rounded-lg border border-rose-100/60 shadow-sm leading-relaxed">
+                              <strong className="text-rose-800 font-bold">Примітка:</strong> {b.notes}
+                            </div>
+                          )}
                         </div>
                       ))
                     ) : (
@@ -1443,6 +1552,8 @@
             {/* Вкладка 2: Бронювання — ТІЛЬКИ ДЛЯ АДМІНІСТРАТОРА */}
             {activeTab === 'bookings' && userRole === 'admin' && (
               <div className="space-y-4">
+                
+                {/* Рядок пошуку */}
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
                     <SearchIcon />
@@ -1452,8 +1563,35 @@
                     placeholder="Шукати за ім'ям, тел..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-medium"
+                    className="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-medium shadow-sm"
                   />
+                </div>
+
+                {/* РОЗШИРЕНІ ФІЛЬТРИ */}
+                <div className="grid grid-cols-2 gap-2 bg-white p-3 rounded-xl border shadow-sm">
+                  <div>
+                    <label className="text-[9px] font-bold text-slate-400 block mb-1">Котедж / Кімната</label>
+                    <select 
+                      value={filterRoom} 
+                      onChange={(e) => setFilterRoom(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-2 text-[11px] font-semibold text-slate-700 focus:outline-none"
+                    >
+                      <option value="ALL">Всі кімнати</option>
+                      {rooms.map(r => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-bold text-slate-400 block mb-1">Оплата</label>
+                    <select 
+                      value={filterPayment} 
+                      onChange={(e) => setFilterPayment(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-2 text-[11px] font-semibold text-slate-700 focus:outline-none"
+                    >
+                      <option value="ALL">Будь-яка</option>
+                      <option value="PAID">Оплачено 100%</option>
+                      <option value="UNPAID">Мають борг ⚠️</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div className="bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-100/50 text-[10px] text-indigo-700 font-semibold text-center">
@@ -1469,7 +1607,14 @@
                           <div className="flex justify-between items-start">
                             <div>
                               <span className="bg-indigo-50 text-indigo-800 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider block w-max mb-1">{b.roomName}</span>
-                              <h4 className="font-extrabold text-sm text-slate-900">{b.guestName}</h4>
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-extrabold text-sm text-slate-900">{b.guestName}</h4>
+                                {b.guestPhone && (
+                                  <a href={`tel:${b.guestPhone}`} className="p-1 bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 rounded-full transition" title="Зателефонувати">
+                                    <PhoneIcon />
+                                  </a>
+                                )}
+                              </div>
                               <p className="text-xs text-slate-500 mt-0.5">{b.guestPhone || 'Телефон не вказано'}</p>
                             </div>
                             <div className="flex flex-col items-end gap-1">
@@ -1512,6 +1657,13 @@
                             )}
                           </div>
 
+                          {/* Показ приміток у загальному списку */}
+                          {b.notes && (
+                            <div className="text-[10px] text-slate-600 bg-amber-50/50 p-2 rounded-lg border border-amber-100/50 leading-relaxed italic">
+                              <span className="font-bold text-amber-800 not-italic">Примітка:</span> {b.notes}
+                            </div>
+                          )}
+
                           <div className="flex justify-between items-center border-t border-slate-100 pt-2.5">
                             <span className="text-[10px] text-slate-400">Створив: <strong>{b.createdBy || 'Адмін'}</strong></span>
                             <div className="flex items-center space-x-2">
@@ -1537,7 +1689,7 @@
                       );
                     })
                   ) : (
-                    <p className="text-xs text-slate-400 text-center py-12 font-medium">Активних бронювань не знайдено.</p>
+                    <p className="text-xs text-slate-400 text-center py-12 font-medium">Бронювань із вибраними фільтрами не знайдено.</p>
                   )}
                 </div>
               </div>
@@ -1549,10 +1701,28 @@
                 <div className="text-center space-y-1">
                   <span className="text-[9px] uppercase font-bold text-slate-400 block">Садиба Кичера</span>
                   <h2 className="text-lg font-black text-slate-900">Календар завантаженості</h2>
-                  <div className="flex items-center justify-between max-w-[280px] mx-auto pt-2 text-[#4f46e5]">
-                    <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-slate-100 rounded-full transition"><ChevronLeftIcon /></button>
-                    <span className="text-xs font-black uppercase tracking-wider">{monthLabel}</span>
-                    <button onClick={() => changeMonth(1)} className="p-1 hover:bg-slate-100 rounded-full transition"><ChevronRightIcon /></button>
+                  
+                  {/* Перемикач місяців із Кнопкою СЬОГОДНІ */}
+                  <div className="flex items-center justify-between max-w-[320px] mx-auto pt-2">
+                    <button onClick={() => changeMonth(-1)} className="p-1.5 bg-white border rounded-full text-[#4f46e5] hover:bg-indigo-50 shadow-sm transition"><ChevronLeftIcon /></button>
+                    
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black uppercase tracking-wider text-[#4f46e5]">{monthLabel}</span>
+                      <button 
+                        onClick={() => {
+                          const now = new Date();
+                          setCurrentDate(new Date(now.getFullYear(), now.getMonth(), 1));
+                          setRangeStart(null);
+                          setRangeEnd(null);
+                          showNotificationToast("Повернуто до поточного місяця");
+                        }} 
+                        className="text-[9px] bg-slate-100 hover:bg-indigo-100 hover:text-[#4f46e5] text-slate-500 font-bold px-2 py-0.5 rounded-full transition"
+                      >
+                        Сьогодні
+                      </button>
+                    </div>
+
+                    <button onClick={() => changeMonth(1)} className="p-1.5 bg-white border rounded-full text-[#4f46e5] hover:bg-indigo-50 shadow-sm transition"><ChevronRightIcon /></button>
                   </div>
                 </div>
 
@@ -1561,6 +1731,25 @@
                   <select value={selectedRoom} onChange={(e) => { setSelectedRoom(e.target.value); setRangeStart(null); setRangeEnd(null); }} className="bg-transparent border-0 text-xs font-extrabold text-[#4f46e5] focus:ring-0 cursor-pointer text-right focus:outline-none">
                     {rooms.map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
+                </div>
+
+                {/* СТАТИСТИКА ЗАВАНТАЖЕНОСТІ НА МІСЯЦЬ */}
+                <div className="bg-white rounded-xl border p-3 shadow-sm flex items-center justify-between max-w-md mx-auto">
+                  <div className="space-y-0.5">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Завантаженість котеджу</span>
+                    <span className="text-xs font-semibold text-slate-600">на обраний місяць:</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-24 bg-slate-100 rounded-full h-2.5 overflow-hidden border">
+                      <div 
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          currentMonthOccupancy > 70 ? 'bg-indigo-600' : currentMonthOccupancy > 40 ? 'bg-emerald-500' : 'bg-amber-500'
+                        }`}
+                        style={{ width: `${currentMonthOccupancy}%` }}
+                      ></div>
+                    </div>
+                    <strong className="text-sm font-black text-slate-900">{currentMonthOccupancy}%</strong>
+                  </div>
                 </div>
 
                 {/* Календарна сітка */}
@@ -1614,15 +1803,19 @@
                     <div className="flex justify-between items-center border-b pb-2">
                       <div>
                         <span className="text-[10px] font-black uppercase text-indigo-600">Оформлення періоду</span>
-                        <p className="text-xs font-black text-slate-900 mt-0.5">{rangeStart ? `Обрано: з ${rangeStart} ${rangeEnd ? `по ${rangeEnd}` : '(вкажіть виїзд)'}` : 'Оберіть дати на календарі'}</p>
+                        <p className="text-xs font-black text-slate-900 mt-0.5">
+                          {rangeStart 
+                            ? `Обрано: з ${rangeStart} ${rangeEnd && rangeEnd !== rangeStart ? `по ${rangeEnd}` : '(1 доба / клікніть іншу дату для виїзду)'}` 
+                            : 'Оберіть дати на календарі'}
+                        </p>
                       </div>
                       {rangeStart && <button onClick={() => { setRangeStart(null); setRangeEnd(null); }} className="text-xs text-rose-500 font-bold">Скасувати</button>}
                     </div>
 
                     <div className="space-y-2.5">
                       <div className="grid grid-cols-2 gap-2.5">
-                        <button onClick={() => applyActionToRange('FREE')} disabled={!rangeStart} className="bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl text-xs font-black disabled:opacity-40">🟢 ВІДКРИТИ</button>
-                        <button onClick={() => applyActionToRange('MANUAL_CLOSE')} disabled={!rangeStart} className="bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-xl text-xs font-black disabled:opacity-40">🔴 ЗАКРИТИ ВРУЧНУ</button>
+                        <button onClick={() => applyActionToRange('FREE')} disabled={!rangeStart} className="bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl text-xs font-black disabled:opacity-40">🟢 ВІДКРИТИ ДАТИ</button>
+                        <button onClick={() => applyActionToRange('MANUAL_CLOSE')} disabled={!rangeStart} className="bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-xl text-xs font-black disabled:opacity-40">🔴 ТЕХ. ЗАКРИТТЯ</button>
                       </div>
                       <button onClick={() => applyActionToRange('DIRECT_BOOKING')} disabled={!rangeStart} className="w-full bg-[#4f46e5] hover:bg-indigo-700 text-white py-3 rounded-xl text-xs font-black disabled:opacity-40">👤 СТВОРИТИ ПРЯМЕ БРОНЮВАННЯ</button>
                     </div>
@@ -1909,28 +2102,60 @@
 
                 {/* ПІДВКЛАДКА: НАЛАШТУВАННЯ */}
                 {moreSubTab === 'settings' && (
-                  <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-4">
-                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">Безпека та пароль адміністратора</h3>
-                    <p className="text-[10px] text-slate-400">Тут ви можете оновити пароль, який використовується для входу в адміністративну панель Садиби Кичера PMS.</p>
+                  <div className="space-y-4">
                     
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-[9px] font-bold text-slate-400 uppercase block mb-1">Новий пароль адміністратора</label>
-                        <input 
-                          type="text" 
-                          placeholder="Введіть новий пароль" 
-                          value={newAdminPasswordInput} 
-                          onChange={(e) => setNewAdminPasswordInput(e.target.value)} 
-                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none" 
-                        />
+                    {/* Керування паролем */}
+                    <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-4">
+                      <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">Безпека та пароль адміністратора</h3>
+                      <p className="text-[10px] text-slate-400">Тут ви можете оновити пароль, який використовується для входу в адміністративну панель Садиби Кичера PMS.</p>
+                      
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-[9px] font-bold text-slate-400 uppercase block mb-1">Новий пароль адміністратора</label>
+                          <input 
+                            type="text" 
+                            placeholder="Введіть новий пароль" 
+                            value={newAdminPasswordInput} 
+                            onChange={(e) => setNewAdminPasswordInput(e.target.value)} 
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none" 
+                          />
+                        </div>
+                        <button 
+                          onClick={handleChangeAdminPassword} 
+                          className="w-full bg-[#4f46e5] text-white py-2.5 rounded-xl text-xs font-bold transition hover:bg-indigo-700"
+                        >
+                          Зберегти новий пароль
+                        </button>
                       </div>
-                      <button 
-                        onClick={handleChangeAdminPassword} 
-                        className="w-full bg-[#4f46e5] text-white py-2.5 rounded-xl text-xs font-bold transition hover:bg-indigo-700"
-                      >
-                        Зберегти новий пароль
-                      </button>
                     </div>
+
+                    {/* РЕЗЕРВНЕ КОПІЮВАННЯ (ІМПОРТ/ЕКСПОРТ) */}
+                    <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-4 border-dashed border-indigo-200">
+                      <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">💾 Резервне копіювання</h3>
+                      <p className="text-[10px] text-slate-400">
+                        Експортуйте замовлення у файл на пристрій для резервної копії або завантажуйте попередньо збережені дані.
+                      </p>
+                      
+                      <div className="space-y-3">
+                        <button 
+                          onClick={handleExportData}
+                          className="w-full bg-slate-900 hover:bg-black text-white py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition"
+                        >
+                          ⬇️ Експортувати у файл (.JSON)
+                        </button>
+                        
+                        <div className="border-t border-slate-100 pt-3">
+                          <label className="text-[9px] font-bold text-slate-400 uppercase block mb-1">Імпортувати / Відновити з файлу</label>
+                          <input 
+                            type="file" 
+                            accept=".json" 
+                            onChange={handleImportData}
+                            className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-[#4f46e5] hover:file:bg-indigo-100 cursor-pointer"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
                   </div>
                 )}
 
@@ -2143,5 +2368,3 @@
   </script>
 </body>
 </html>
-
-```
